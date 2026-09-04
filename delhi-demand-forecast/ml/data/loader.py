@@ -58,13 +58,24 @@ class DatasetReport:
 # Column handling
 # --------------------------------------------------------------------------- #
 def normalize_columns(df: pd.DataFrame) -> pd.DataFrame:
-    """Lower-case, strip and map known aliases to canonical names."""
-    renamed = {}
-    for col in df.columns:
-        key = str(col).strip().lower().replace(" ", "_")
-        renamed[col] = COLUMN_ALIASES.get(key, key)
-    out = df.rename(columns=renamed)
-    # If two raw columns mapped to the same canonical name keep the first.
+    """Lower-case, strip and map known aliases to canonical names.
+
+    A column that already carries a canonical name wins over any alias of it:
+    a file with ``date``, ``time`` *and* ``timestamp`` keeps ``timestamp`` and
+    drops the other two. Without this rule the day-only ``date`` column would
+    silently become the timestamp and collapse the series to daily resolution.
+    """
+    keys = {col: str(col).strip().lower().replace(" ", "_") for col in df.columns}
+    canonical_present = {k for k in keys.values() if k not in COLUMN_ALIASES}
+    keep, renamed = [], {}
+    for col, key in keys.items():
+        target = COLUMN_ALIASES.get(key, key)
+        if target != key and target in canonical_present:
+            continue  # explicit canonical column exists; discard the alias
+        keep.append(col)
+        renamed[col] = target
+    out = df[keep].rename(columns=renamed)
+    # If two aliases mapped to the same canonical name keep the first.
     return out.loc[:, ~out.columns.duplicated()]
 
 

@@ -95,21 +95,57 @@ Endpoints: `/api/health`, `/api/status`, `/api/forecast`, `/api/actual`, `/api/a
 - Daily shape: night trough ~03:00–05:00, afternoon AC peak ~14:00–16:00, **second
   evening peak ~22:00–23:00 which is often the daily maximum**
 
+## Data provenance
+
+- **Primary source: REAL Delhi system load**, `data/raw/delhi_load_history.csv`
+  (gitignored, never committed). 5-minute SLDC readings, single series
+  (`entity = Delhi`), 2023-01-01 00:00 to 2026-09-04 23:10 IST, 374,823 rows.
+  Timestamps are naive in the file and are treated as IST.
+- **Aggregation: 5-min to hourly by MEAN** into `demand_mw` (the training target).
+  The hourly MAX is kept alongside as `demand_max_mw` so the instantaneous-peak
+  margin can be exposed later; it is never a feature. Typical margin: the hourly
+  max exceeds the hourly mean by ~65 MW on a day's peak hour (p95 ~150 MW).
+- **Weather: a supplied hourly file**, `data/raw/delhi_weather_history.csv`
+  (2023-01-01 to 2026-09-04, no gaps). Its provenance is **not verified**; it is
+  labelled `supplied_file` in `data/processed/delhi_history.provenance.json`
+  and must not be presented as Open-Meteo. The Open-Meteo archive path in
+  `scripts/fetch_weather_history.py` remains available when no file is supplied.
+- **Processed file:** `data/processed/delhi_history.csv` (gitignored), built by
+  `python scripts/fetch_weather_history.py --csv data/raw/delhi_load_history.csv
+  --weather-csv data/raw/delhi_weather_history.csv --out data/processed/delhi_history.csv`.
+  31,494 hourly rows; the loader interpolates 341 gap hours (<= 3 h) and leaves
+  397 unfilled (1.2 % missing). Zero outliers flagged.
+- **Demo data is a labelled fallback only.** `data/demo/` and the generator stay
+  untouched. If `PEAKWATCH_HISTORY_CSV` is unset or unreadable the API falls back
+  to simulated history and reports `data_source = "demo"`.
+- Teammate files in `data/raw/` (`training_data.csv`, `test_predictions.csv`,
+  `demand_model.joblib`) are cross-check/reference only. Never train on, load
+  or serve them.
+
 ## Current model state (retraining updates these)
 
-Trained via
-`python scripts/train_model.py --csv data/demo/demo_history.csv --data-source demo`
+Trained on REAL data via
+`python scripts/train_model.py --csv data/processed/delhi_history.csv`
 
-- Selected `hist_gradient_boosting` (validation MAE 167.2) over `random_forest` (182.0)
-- Test MAE **93.8 MW** vs same-hour-previous-day baseline **333.6 MW** — 71.9% better
-- Interval coverage 94.4%
-- Top drivers: demand 1h ago (805.6), temperature (218.5), hour-of-day terms,
-  cooling degrees above 24 °C
-- Artifact: `ml/models/model.joblib`
+- Selected `hist_gradient_boosting` (validation MAE 57.5) over `random_forest` (72.3)
+- Chronological split: train 2023-01 to 2025-07, validation 2025-07 to 2026-02,
+  **test 2026-02-02 to 2026-09-01** (includes summer 2026)
+- Test MAE **69.4 MW** (MAPE 1.4 %) vs same-hour-previous-day baseline **297.9 MW**
+  — 76.7 % better. Daily-peak MAE 76.8 MW, peak-hour hit rate 85 %.
+- Interval coverage **75.3 %** (P10-P90 band from validation residuals is too
+  narrow on the test window; label it as such, do not call it 80 %).
+- Summer-2025 backtest (model trained only on data before 2025-05-01, tested
+  May-Sep 2025): 1-step MAE 69.7 vs baseline 335.8 (79 % better). Recursive
+  24 h from 23:00: MAE 223 vs 339, daily-peak MAE 245 vs 320.
+- Top drivers: demand 1 h ago (1453), hour of day (79), demand same hour
+  yesterday (56), hour sin/cos, temperature (29). Metered history dominates;
+  weather matters mainly through the lags.
+- Artifact: `ml/models/model.joblib` (`data_source = "real"`), gitignored.
 
-**Known weakness:** the 24h recursive forecast damps the evening peak — predictions
-regress toward the mean as predicted lags feed back in. Treat this as a real defect,
-not a quirk.
+**Known weakness:** the recursive 24 h forecast under-predicts the peak on the
+hottest days — on the 10 highest-load summer-2025 days the predicted daily peak
+is ~300 MW low. Real data now confirms Delhi's evening peak (~23:00) ties the
+afternoon peak (~15:00); the demo generator still lacks it.
 
 ## Constraints on this machine
 

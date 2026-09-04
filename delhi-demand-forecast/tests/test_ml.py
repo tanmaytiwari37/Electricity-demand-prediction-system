@@ -27,6 +27,31 @@ def test_normalize_columns_maps_aliases():
     assert list(out.columns) == ["timestamp", "load_mw", "temperature_c"] or "timestamp" in out.columns
 
 
+def test_normalize_columns_prefers_timestamp_over_date_and_time():
+    # Real Delhi export layout: date + time + a full timestamp column.
+    df = pd.DataFrame({
+        "date": ["24/03/2026"], "time": ["23:30"], "entity": ["Delhi"], "type": ["MW"],
+        "load_mw": [3041.48], "timestamp": ["2026-03-24 23:30:00"],
+    })
+    out = normalize_columns(df)
+    assert list(out.columns) == ["entity", "type", "demand_mw", "timestamp"]
+    assert out["timestamp"].iloc[0] == "2026-03-24 23:30:00"
+
+
+def test_normalize_columns_date_and_time_only_maps_first_alias():
+    df = pd.DataFrame({"date": ["2026-03-24"], "time": ["23:30"], "load_mw": [3041.48]})
+    out = normalize_columns(df)
+    assert list(out.columns) == ["timestamp", "demand_mw"]
+    assert out["timestamp"].iloc[0] == "2026-03-24"
+
+
+def test_normalize_columns_timestamp_only_is_unchanged():
+    df = pd.DataFrame({"timestamp": ["2026-03-24 23:00:00"], "demand_mw": [3000.0]})
+    out = normalize_columns(df)
+    assert list(out.columns) == ["timestamp", "demand_mw"]
+    assert out["timestamp"].iloc[0] == "2026-03-24 23:00:00"
+
+
 def test_validate_schema_missing_required_gives_useful_message():
     with pytest.raises(SchemaError) as exc:
         validate_schema(pd.DataFrame({"timestamp": [1], "temperature_c": [2]}))
