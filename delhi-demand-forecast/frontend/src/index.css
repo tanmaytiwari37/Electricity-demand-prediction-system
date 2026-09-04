@@ -1,0 +1,46 @@
+@import "tailwindcss";
+
+/* Control-room theme. Dark only, by design: the operator UI is a single look.
+   Series colours were validated for colour-vision safety against surface-1
+   (see docs/ARCHITECTURE.md). Status colours are reserved for risk state. */
+@theme {
+  --color-surface-0: #0b1220;   /* page */
+  --color-surface-1: #0f172a;   /* panel / chart surface */
+  --color-surface-2: #16213a;   /* raised */
+  --color-surface-3: #1e2b47;   /* hover */
+  --color-line: #22304a;
+  --color-line-strong: #33436a;
+
+  --color-ink: #e6edf7;
+  --color-ink-2: #a3b1c6;
+  --color-ink-3: #6b7a93;
+
+  --color-series-blue: #3987e5;     /* forecast / predicted */
+  --color-series-aqua: #199e70;     /* actual */
+  --color-series-orange: #d95926;   /* scenario */
+  --color-series-violet: #9085e9;   /* solar */
+  --color-series-magenta: #d55181;
+
+  --color-good: #0ca30c;
+  --color-warning: #fab219;
+  --color-serious: #ec835a;
+  --color-critical: #d03b3b;
+
+  --font-sans: ui-sans-serif, system-ui, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, "Cascadia Mono", "SFMono-Regular", Menlo, Consolas, monospace;
+}
+
+html { color-scheme: dark; }
+body {
+  margin: 0;
+  background: var(--color-surface-0);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+.num { font-variant-numeric: tabular-nums; }
+
+input[type="range"] { accent-color: var(--color-series-blue); }
+
+.scroll-thin::-webkit-scrollbar { height: 8px; width: 8px; }
+.scroll-thin::-webkit-scrollbar-thumb { background: var(--color-line-strong); border-radius: 4px; }
