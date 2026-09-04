@@ -10,7 +10,7 @@ export const fmtMW = (n: number | null | undefined): string => (n == null ? '–
 export const fmtSigned = (n: number | null | undefined, unit = 'MW'): string => {
   if (n == null) return '–'
   const sign = n > 0 ? '+' : n < 0 ? '−' : ''
-  return `${sign}${fmtInt(Math.abs(n))} ${unit}`
+  return `${sign}${fmtInt(Math.abs(n))}${unit ? ` ${unit}` : ''}`
 }
 
 export const fmtPct = (n: number | null | undefined, digits = 1): string =>
@@ -19,15 +19,19 @@ export const fmtPct = (n: number | null | undefined, digits = 1): string =>
 export const fmtTemp = (n: number | null | undefined): string => (n == null ? '–' : `${n.toFixed(1)} °C`)
 
 const hourFmt = new Intl.DateTimeFormat('en-IN', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: IST })
+const clockFmt = new Intl.DateTimeFormat('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false, timeZone: IST })
 const dayHourFmt = new Intl.DateTimeFormat('en-IN', { weekday: 'short', hour: '2-digit', minute: '2-digit', hour12: false, timeZone: IST })
 const dateFmt = new Intl.DateTimeFormat('en-IN', { day: '2-digit', month: 'short', timeZone: IST })
+const longDateFmt = new Intl.DateTimeFormat('en-IN', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric', timeZone: IST })
 const dateTimeFmt = new Intl.DateTimeFormat('en-IN', {
   day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit', hour12: false, timeZone: IST,
 })
 
 export const fmtHour = (ts: string): string => hourFmt.format(new Date(ts))
+export const fmtClock = (d: Date): string => clockFmt.format(d)
 export const fmtDayHour = (ts: string): string => dayHourFmt.format(new Date(ts))
 export const fmtDate = (ts: string): string => dateFmt.format(new Date(ts))
+export const fmtLongDate = (d: Date): string => longDateFmt.format(d)
 export const fmtDateTime = (ts: string): string => `${dateTimeFmt.format(new Date(ts))} IST`
 
 /** Axis tick: show the hour, and the date on midnight ticks. */
@@ -48,11 +52,13 @@ export interface ToneMeta {
   icon: string
 }
 
+/** Status colour is muted and never used alone: every level carries a word
+ *  and a glyph. LOW is neutral grey-green so a calm grid stays calm. */
 export const riskMeta: Record<RiskLevel, ToneMeta> = {
-  low: { label: 'LOW', text: 'text-good', bg: 'bg-good/10', border: 'border-good/40', dot: 'bg-good', icon: '●' },
-  medium: { label: 'MEDIUM', text: 'text-warning', bg: 'bg-warning/10', border: 'border-warning/40', dot: 'bg-warning', icon: '▲' },
-  high: { label: 'HIGH', text: 'text-serious', bg: 'bg-serious/10', border: 'border-serious/40', dot: 'bg-serious', icon: '▲' },
-  critical: { label: 'CRITICAL', text: 'text-critical', bg: 'bg-critical/10', border: 'border-critical/40', dot: 'bg-critical', icon: '■' },
+  low: { label: 'LOW', text: 'text-good', bg: 'bg-good/8', border: 'border-good/35', dot: 'bg-good', icon: '●' },
+  medium: { label: 'MEDIUM', text: 'text-warning', bg: 'bg-warning/8', border: 'border-warning/35', dot: 'bg-warning', icon: '▲' },
+  high: { label: 'HIGH', text: 'text-serious', bg: 'bg-serious/8', border: 'border-serious/35', dot: 'bg-serious', icon: '▲' },
+  critical: { label: 'CRITICAL', text: 'text-critical', bg: 'bg-critical/8', border: 'border-critical/35', dot: 'bg-critical', icon: '■' },
 }
 
 export const feederMeta: Record<FeederStatus, ToneMeta> = {
@@ -63,3 +69,6 @@ export const feederMeta: Record<FeederStatus, ToneMeta> = {
 
 export const riskFromUtil = (utilPct: number, t = { medium: 85, high: 92, critical: 97 }): RiskLevel =>
   utilPct >= t.critical ? 'critical' : utilPct >= t.high ? 'high' : utilPct >= t.medium ? 'medium' : 'low'
+
+export const riskTone = (level: RiskLevel): 'good' | 'warning' | 'serious' | 'critical' =>
+  ({ low: 'good', medium: 'warning', high: 'serious', critical: 'critical' } as const)[level]

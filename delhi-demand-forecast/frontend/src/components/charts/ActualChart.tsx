@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import { CartesianGrid, ComposedChart, Legend, Line, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import type { ActualPoint } from '../../types/api.ts'
 import { fmtDateTime, fmtInt, fmtMW, fmtSigned, fmtTick } from '../../utils/format.ts'
-import { C, axisLine, niceDomain, tickStyle } from './theme.ts'
+import { C, axisLine, legendStyle, niceDomain, tickStyle } from './theme.ts'
 import { TooltipBox, hoveredRow, type TipProps } from './ChartTooltip.tsx'
 
 export default function ActualChart({ points, height = 240 }: { points: ActualPoint[]; height?: number }) {
@@ -22,7 +22,7 @@ export default function ActualChart({ points, height = 240 }: { points: ActualPo
           <XAxis dataKey="ts" tickFormatter={fmtTick} tick={tickStyle} axisLine={axisLine} tickLine={false} interval={Math.max(0, Math.floor(points.length / 10) - 1)} />
           <YAxis domain={domain} tick={tickStyle} axisLine={false} tickLine={false} tickFormatter={(v: number) => fmtInt(v)} width={54} />
           <Tooltip
-            cursor={{ stroke: C.axis, strokeDasharray: '3 3' }}
+            cursor={{ stroke: C.tick, strokeDasharray: '3 3' }}
             content={(props: TipProps<ActualPoint>) => {
               const p = hoveredRow(props)
               if (!p) return null
@@ -38,12 +38,12 @@ export default function ActualChart({ points, height = 240 }: { points: ActualPo
               )
             }}
           />
-          <Legend verticalAlign="top" align="right" height={24} iconType="plainline" wrapperStyle={{ fontSize: 11, color: C.ink2 }} />
+          <Legend verticalAlign="top" align="right" height={26} iconType="plainline" iconSize={14} wrapperStyle={legendStyle} />
           <Line type="monotone" dataKey="actual_mw" name="Actual" stroke={C.actual} strokeWidth={2} dot={false} isAnimationActive={false} />
           <Line type="monotone" dataKey="predicted_mw" name="Predicted (1 h ahead)" stroke={C.forecast} strokeWidth={2} strokeDasharray="5 3" dot={false} isAnimationActive={false} connectNulls={false} />
         </ComposedChart>
       </ResponsiveContainer>
-      {mae != null && <p className="num mt-1 text-right text-[11px] text-ink-3">Mean absolute error over window: {fmtInt(mae)} MW</p>}
+      {mae != null && <p className="num mt-1 text-right text-[10.5px] text-ink-3">Mean absolute error over window: <span className="font-semibold text-ink-2">{fmtInt(mae)} MW</span></p>}
     </div>
   )
 }

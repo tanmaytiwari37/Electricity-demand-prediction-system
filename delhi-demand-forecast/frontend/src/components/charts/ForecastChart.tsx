@@ -4,7 +4,7 @@ import {
 } from 'recharts'
 import type { ActualPoint, ForecastPoint } from '../../types/api.ts'
 import { fmtDateTime, fmtInt, fmtMW, fmtTemp, fmtTick } from '../../utils/format.ts'
-import { C, axisLine, niceDomain, tickStyle } from './theme.ts'
+import { C, axisLine, legendStyle, niceDomain, tickStyle } from './theme.ts'
 import { TooltipBox, hoveredRow, type TipProps } from './ChartTooltip.tsx'
 
 interface Row {
@@ -29,11 +29,13 @@ interface Props {
 function TooltipContent(props: TipProps<Row>) {
   const r = hoveredRow(props)
   if (!r) return null
-  const rows = []
-  if (r.actual != null) rows.push({ label: 'Actual', value: fmtMW(r.actual), color: C.actual })
-  if (r.predicted != null) rows.push({ label: r.future ? 'Forecast' : 'Backtest', value: fmtMW(r.predicted), color: C.forecast })
-  if (r.band) rows.push({ label: 'Range', value: `${fmtInt(r.band[0])} – ${fmtInt(r.band[1])} MW` })
-  if (r.temp != null) rows.push({ label: 'Temperature', value: fmtTemp(r.temp) })
+  const rows = [
+    { label: 'Actual', value: r.actual != null ? fmtMW(r.actual) : '–', color: C.actual },
+    { label: r.future ? 'Predicted' : 'Backtest', value: r.predicted != null ? fmtMW(r.predicted) : '–', color: C.forecast },
+    { label: 'Lower (P10)', value: r.band ? fmtMW(r.band[0]) : '–' },
+    { label: 'Upper (P90)', value: r.band ? fmtMW(r.band[1]) : '–' },
+    { label: 'Temperature', value: fmtTemp(r.temp), color: C.magenta },
+  ]
   return <TooltipBox title={fmtDateTime(r.ts)} rows={rows} />
 }
 
@@ -56,17 +58,17 @@ export default function ForecastChart({ forecast, actual = [], capacityMw, peakT
 
   return (
     <div>
-      <div className="mb-2 flex items-center justify-between gap-2">
-        <span className="text-[11px] text-ink-3">{intervalLabel}</span>
-        <button onClick={() => setTable((t) => !t)} className="text-[11px] text-series-blue hover:underline">
+      <div className="mb-1 flex items-center justify-between gap-2">
+        <span className="text-[10.5px] text-ink-3">{intervalLabel}</span>
+        <button onClick={() => setTable((t) => !t)} className="pressable rounded-[3px] px-1.5 py-0.5 text-[10.5px] font-semibold text-ink-2 hover:bg-surface-2 hover:text-ink">
           {table ? 'Show chart' : 'Show table'}
         </button>
       </div>
       {table ? (
-        <div className="max-h-80 overflow-auto scroll-thin rounded border border-line">
-          <table className="num w-full text-xs">
+        <div className="max-h-80 overflow-auto scroll-thin rounded-[4px] border border-line">
+          <table className="num w-full text-[11px]">
             <thead className="sticky top-0 bg-surface-2 text-left text-ink-2">
-              <tr><th className="p-2">Time (IST)</th><th className="p-2 text-right">Actual</th><th className="p-2 text-right">Forecast</th><th className="p-2 text-right">Low</th><th className="p-2 text-right">High</th><th className="p-2 text-right">Temp</th></tr>
+              <tr><th className="p-2 font-semibold">Time (IST)</th><th className="p-2 text-right font-semibold">Actual</th><th className="p-2 text-right font-semibold">Predicted</th><th className="p-2 text-right font-semibold">Lower</th><th className="p-2 text-right font-semibold">Upper</th><th className="p-2 text-right font-semibold">Temp</th></tr>
             </thead>
             <tbody>
               {data.map((r) => (
@@ -84,19 +86,19 @@ export default function ForecastChart({ forecast, actual = [], capacityMw, peakT
         </div>
       ) : (
         <ResponsiveContainer width="100%" height={height}>
-          <ComposedChart data={data} margin={{ top: 12, right: 16, left: 0, bottom: 0 }}>
+          <ComposedChart data={data} margin={{ top: 14, right: 16, left: 0, bottom: 0 }}>
             <CartesianGrid stroke={C.grid} vertical={false} />
             <XAxis dataKey="ts" tickFormatter={fmtTick} tick={tickStyle} axisLine={axisLine} tickLine={false} interval={tickInterval} minTickGap={24} />
             <YAxis domain={domain} tick={tickStyle} axisLine={false} tickLine={false} tickFormatter={(v: number) => fmtInt(v)} width={54} />
-            <Tooltip content={<TooltipContent />} cursor={{ stroke: C.axis, strokeDasharray: '3 3' }} />
-            <Legend verticalAlign="top" align="right" height={24} iconType="plainline" wrapperStyle={{ fontSize: 11, color: C.ink2 }} />
-            <Area type="monotone" dataKey="band" name="P10–P90 band" stroke="none" fill={C.forecast} fillOpacity={0.12} connectNulls={false} isAnimationActive={false} legendType="rect" />
-            <Line type="monotone" dataKey="actual" name="Actual" stroke={C.actual} strokeWidth={2} dot={false} connectNulls={false} isAnimationActive={false} />
-            <Line type="monotone" dataKey="predicted" name="Forecast" stroke={C.forecast} strokeWidth={2} dot={false} connectNulls={false} isAnimationActive={false} />
-            <ReferenceLine y={capacityMw} stroke={C.critical} strokeDasharray="6 4" label={{ value: `Planning capacity ${fmtInt(capacityMw)} MW`, position: 'insideTopRight', fill: C.critical, fontSize: 11 }} />
+            <Tooltip content={<TooltipContent />} cursor={{ stroke: C.tick, strokeDasharray: '3 3' }} />
+            <Legend verticalAlign="top" align="right" height={26} iconType="plainline" iconSize={14} wrapperStyle={legendStyle} />
+            <Area type="monotone" dataKey="band" name="Prediction interval (P10–P90)" stroke="none" fill={C.forecast} fillOpacity={0.14} connectNulls={false} isAnimationActive={false} legendType="rect" />
+            <Line type="monotone" dataKey="actual" name="Actual demand" stroke={C.actual} strokeWidth={2} dot={false} connectNulls={false} isAnimationActive={false} />
+            <Line type="monotone" dataKey="predicted" name="Predicted demand" stroke={C.forecast} strokeWidth={2} dot={false} connectNulls={false} isAnimationActive={false} />
+            <ReferenceLine y={capacityMw} stroke={C.critical} strokeOpacity={0.8} strokeDasharray="6 4" label={{ value: `Grid capacity ${fmtInt(capacityMw)} MW`, position: 'insideTopRight', fill: C.critical, fontSize: 10.5 }} />
             {nowTs && <ReferenceLine x={nowTs} stroke={C.axis} label={{ value: 'now', position: 'insideTopLeft', fill: C.tick, fontSize: 10 }} />}
             {peak && (
-              <ReferenceDot x={peak.ts} y={peak.predicted_mw} r={6} fill={C.forecast} stroke={C.surface} strokeWidth={2}
+              <ReferenceDot x={peak.ts} y={peak.predicted_mw} r={5} fill={C.ink} stroke={C.surface} strokeWidth={2}
                 label={{ value: `Peak ${fmtInt(peak.predicted_mw)} MW`, position: 'top', fill: C.ink, fontSize: 11, fontWeight: 600 }} />
             )}
           </ComposedChart>

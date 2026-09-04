@@ -6,7 +6,7 @@ import { TooltipBox, hoveredRow, type TipProps } from './ChartTooltip.tsx'
 
 type Pt = WeatherImpactResponse['scatter'][number]
 
-export default function WeatherScatter({ data, comfort, height = 300 }: { data: Pt[]; comfort: [number, number]; height?: number }) {
+export default function WeatherScatter({ data, comfort, height = 320 }: { data: Pt[]; comfort: [number, number]; height?: number }) {
   const loads = data.map((d) => d.avg_load_mw)
   const lo = Math.floor((Math.min(...loads) - 300) / 500) * 500
   const hi = Math.ceil((Math.max(...loads) + 300) / 500) * 500
@@ -17,9 +17,9 @@ export default function WeatherScatter({ data, comfort, height = 300 }: { data: 
         <XAxis type="number" dataKey="temp_c" name="Temperature" unit="°C" domain={['dataMin - 2', 'dataMax + 2']} tick={tickStyle} axisLine={axisLine} tickLine={false} />
         <YAxis type="number" dataKey="avg_load_mw" name="Average load" domain={[lo, hi]} tick={tickStyle} axisLine={false} tickLine={false} tickFormatter={(v: number) => fmtInt(v)} width={54} />
         <ZAxis type="number" dataKey="n_hours" range={[40, 400]} />
-        <ReferenceArea x1={comfort[0]} x2={comfort[1]} fill={C.actual} fillOpacity={0.08} label={{ value: 'comfort band', fill: C.tick, fontSize: 10, position: 'insideTop' }} />
+        <ReferenceArea x1={comfort[0]} x2={comfort[1]} fill={C.ink2} fillOpacity={0.06} label={{ value: 'comfort band', fill: C.tick, fontSize: 10, position: 'insideTop' }} />
         <Tooltip
-          cursor={{ strokeDasharray: '3 3', stroke: C.axis }}
+          cursor={{ strokeDasharray: '3 3', stroke: C.tick }}
           content={(props: TipProps<Pt>) => {
             const p = hoveredRow(props)
             if (!p) return null

@@ -1,25 +1,27 @@
 /** Chart tokens. Series colours follow the entity, never the rank:
- *  forecast = blue, actual = aqua, scenario = orange, solar = violet. */
+ *  forecast = blue, actual = aqua, scenario = orange, solar = violet,
+ *  temperature = magenta. Validated against surface-1 (#111113). */
 export const C = {
   forecast: '#3987e5',
   actual: '#199e70',
   scenario: '#d95926',
   solar: '#9085e9',
   magenta: '#d55181',
-  grid: '#22304a',
-  axis: '#33436a',
-  tick: '#6b7a93',
-  ink: '#e6edf7',
-  ink2: '#a3b1c6',
-  surface: '#0f172a',
-  good: '#0ca30c',
-  warning: '#fab219',
-  serious: '#ec835a',
-  critical: '#d03b3b',
+  grid: '#1f1f23',
+  axis: '#2f2f35',
+  tick: '#6b6b74',
+  ink: '#f4f4f5',
+  ink2: '#a1a1aa',
+  surface: '#111113',
+  good: '#3a9d5d',
+  warning: '#d9a21b',
+  serious: '#e0784a',
+  critical: '#d64545',
 }
 
-export const tickStyle = { fill: C.tick, fontSize: 11 }
+export const tickStyle = { fill: C.tick, fontSize: 11, fontFamily: 'Inter, system-ui, sans-serif' }
 export const axisLine = { stroke: C.axis }
+export const legendStyle = { fontSize: 11, color: C.ink2, paddingBottom: 6 }
 
 /** Sequential blue ramp (light = low, dark = high) from the validated palette,
  *  reversed for the dark surface so higher magnitude reads brighter. */

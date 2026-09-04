@@ -3,18 +3,16 @@ import AllocationNotice from '../components/AllocationNotice.tsx'
 import AreaMap from '../components/charts/AreaMap.tsx'
 import FeederHeatmap from '../components/charts/FeederHeatmap.tsx'
 import FeederTable from '../components/FeederTable.tsx'
-import KpiTile from '../components/ui/KpiTile.tsx'
-import Panel from '../components/ui/Panel.tsx'
-import { Badge, methodKind } from '../components/ui/Badges.tsx'
+import Button from '../components/ui/Button.tsx'
+import KpiTile, { StatStrip } from '../components/ui/KpiTile.tsx'
+import Panel, { PageHeader } from '../components/ui/Panel.tsx'
+import { SourceLine, methodKind } from '../components/ui/Badges.tsx'
 import { ErrorState, Loading } from '../components/ui/States.tsx'
 import { useApi } from '../hooks/useApi.ts'
 import { useAppState } from '../hooks/useAppState.tsx'
 import { api } from '../services/api.ts'
 import type { Feeder } from '../types/api.ts'
-import { fmtDateTime, fmtInt } from '../utils/format.ts'
-
-/** Dashed magenta frame = proportional allocation, never a measured value. */
-const ALLOC_PANEL = 'border-dashed border-series-magenta/50'
+import { fmtDateTime, fmtDayHour, fmtInt } from '../utils/format.ts'
 
 export default function Areas() {
   const { capacityMw, version, status } = useAppState()
@@ -38,48 +36,42 @@ export default function Areas() {
   }, [d, hourIdx])
 
   const worst = view ? [...view.rows].sort((a, b) => b.utilization_pct - a.utilization_pct)[0] : null
-  const shares = status?.assumptions.discom_share
-  const allocBadge = <Badge kind="allocated" small />
+  const peakIdx = d ? d.hourly.findIndex((h) => h.ts === d.as_of) : 0
 
   return (
-    <div className="flex flex-col gap-4">
-      <div>
-        <h1 className="text-lg font-bold">Area and DISCOM risk</h1>
-        <p className="text-xs text-ink-3">
-          The system-level forecast split across Delhi's five distribution licensees by configured share ratios. Our load data is system-wide only; nothing on this page is a feeder or DISCOM measurement.
-        </p>
-      </div>
+    <div className="flex flex-col gap-5">
+      <PageHeader
+        title="Area intelligence"
+        subtitle="The system forecast split across Delhi's five distribution licensees by configured share."
+        sources={d && <SourceLine kinds={[methodKind(d.forecast_method), 'allocated']} />}
+      />
 
-      <AllocationNotice shares={shares} />
+      <AllocationNotice shares={status?.assumptions.discom_share} />
 
       {feeders.loading && !d ? <Loading height="h-64" /> : feeders.error ? <ErrorState error={feeders.error} onRetry={feeders.refetch} /> : d && view && (
         <>
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-            <KpiTile label="System forecast" value={fmtInt(view.system)} unit="MW" sub={fmtDateTime(view.ts)} tone="accent" badge={<Badge kind={methodKind(d.forecast_method)} small />} />
-            <KpiTile label="Most loaded area" value={worst ? `≈ ${worst.discom}` : '–'} sub={worst ? `≈ ${worst.utilization_pct.toFixed(1)}% of assumed area capacity` : '–'} tone={worst?.status === 'critical' ? 'critical' : worst?.status === 'warning' ? 'warning' : 'default'} badge={allocBadge} className={ALLOC_PANEL} />
-            <KpiTile label="Areas at warning+" value={`≈ ${view.rows.filter((r) => r.status !== 'ok').length}`} unit={`of ${view.rows.length}`} sub="by allocated utilisation" badge={allocBadge} className={ALLOC_PANEL} />
-            <KpiTile label="Basis" value={hourIdx == null ? (d.basis === 'forecast_peak' ? 'Forecast peak hour' : d.basis) : 'Selected hour'} sub={d.forecast_method === 'ml_model' ? 'model forecast, then allocated' : 'heuristic forecast, then allocated'} />
-          </div>
+          <StatStrip cols="md:grid-cols-4">
+            <KpiTile flat label="System forecast" value={fmtInt(view.system)} unit="MW" sub={fmtDateTime(view.ts)} />
+            <KpiTile flat label="Most loaded area" value={worst ? worst.discom : '–'} sub={worst ? `${worst.utilization_pct.toFixed(1)}% of assumed capacity` : '–'} tone={worst?.status === 'critical' ? 'critical' : worst?.status === 'warning' ? 'warning' : 'default'} />
+            <KpiTile flat label="Areas at warning" value={view.rows.filter((r) => r.status !== 'ok').length} unit={`of ${view.rows.length}`} tone={view.rows.some((r) => r.status !== 'ok') ? 'warning' : 'default'} />
+            <KpiTile flat label="Evaluated at" value={hourIdx == null ? 'Peak hour' : fmtDayHour(view.ts).split(' ').slice(-1)[0]} sub={hourIdx == null ? fmtDayHour(d.as_of) : 'selected hour'} />
+          </StatStrip>
 
-          <Panel
-            title="Hour selector"
-            subtitle="Slide to evaluate any hour of the next 24 h. Default is the forecast peak hour."
-            actions={hourIdx != null && <button onClick={() => setHourIdx(null)} className="text-[11px] text-series-blue hover:underline">Back to peak hour</button>}
-          >
-            <input type="range" min={0} max={d.hourly.length - 1} value={hourIdx ?? d.hourly.findIndex((h) => h.ts === d.as_of)} onChange={(e) => setHourIdx(Number(e.target.value))} className="w-full" aria-label="Hour of forecast horizon" />
-            <div className="num flex justify-between text-[10px] text-ink-3"><span>{fmtDateTime(d.hourly[0].ts)}</span><span>{fmtDateTime(d.hourly[d.hourly.length - 1].ts)}</span></div>
-          </Panel>
-
-          <div className="grid gap-4 xl:grid-cols-5">
-            <Panel className={`xl:col-span-3 ${ALLOC_PANEL}`} title="Areas (allocated)" subtitle={`System forecast × share at ${fmtDateTime(view.ts)}. ≈ marks every allocated value.`} badges={<>{allocBadge}<Badge kind={methodKind(d.forecast_method)} small /></>}>
+          <div className="grid gap-5 xl:grid-cols-5">
+            <Panel className="xl:col-span-3" title="Areas" subtitle={`At ${fmtDateTime(view.ts)} · click a column to sort`} actions={hourIdx != null && <Button size="sm" onClick={() => setHourIdx(null)}>Back to peak hour</Button>}>
+              <div className="mb-4 flex items-center gap-4 border-b border-line pb-4">
+                <span className="label shrink-0">Hour</span>
+                <input type="range" min={0} max={d.hourly.length - 1} value={hourIdx ?? peakIdx} onChange={(e) => setHourIdx(Number(e.target.value))} aria-label="Hour of forecast horizon" />
+                <span className="num w-24 shrink-0 text-right text-[12px] font-semibold text-ink">{fmtDayHour(view.ts)}</span>
+              </div>
               <FeederTable feeders={view.rows} />
             </Panel>
-            <Panel className={`xl:col-span-2 ${ALLOC_PANEL}`} title="Schematic map (allocated)" subtitle="Positioned by area coordinates. Circle size is allocated load, not measured." badges={allocBadge}>
+            <Panel className="xl:col-span-2" title="Schematic map" subtitle="Circle size is allocated load. Not a GIS map.">
               <AreaMap feeders={view.rows} />
             </Panel>
           </div>
 
-          <Panel className={ALLOC_PANEL} title="Allocated utilisation by area and hour" subtitle="Next 24 hours of the system forecast, split by share. Brighter = higher share of assumed area capacity; rings mark warning and critical thresholds." badges={allocBadge}>
+          <Panel title="Utilisation by area and hour" subtitle="Next 24 hours. Brighter = higher share of assumed area capacity; rings mark warning and critical.">
             <FeederHeatmap feeders={d.feeders} hourly={d.hourly} />
           </Panel>
         </>

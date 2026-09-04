@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import { Area, CartesianGrid, ComposedChart, Legend, Line, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import type { WhatIfPoint } from '../../types/api.ts'
 import { fmtDateTime, fmtInt, fmtMW, fmtSigned, fmtTick } from '../../utils/format.ts'
-import { C, axisLine, niceDomain, tickStyle } from './theme.ts'
+import { C, axisLine, legendStyle, niceDomain, tickStyle } from './theme.ts'
 import { TooltipBox, hoveredRow, type TipProps } from './ChartTooltip.tsx'
 
 export default function ScenarioChart({ points, capacityMw, height = 300 }: { points: WhatIfPoint[]; capacityMw: number; height?: number }) {
@@ -10,7 +10,6 @@ export default function ScenarioChart({ points, capacityMw, height = 300 }: { po
     const v = points.flatMap((p) => [p.baseline_mw, p.scenario_mw])
     return niceDomain(Math.min(...v), Math.max(...v), capacityMw)
   }, [points, capacityMw])
-  const hasSolar = points.some((p) => p.solar_gen_mw > 0)
   return (
     <ResponsiveContainer width="100%" height={height}>
       <ComposedChart data={points} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
@@ -18,7 +17,7 @@ export default function ScenarioChart({ points, capacityMw, height = 300 }: { po
         <XAxis dataKey="ts" tickFormatter={fmtTick} tick={tickStyle} axisLine={axisLine} tickLine={false} interval={Math.max(0, Math.floor(points.length / 12) - 1)} />
         <YAxis domain={domain} tick={tickStyle} axisLine={false} tickLine={false} tickFormatter={(v: number) => fmtInt(v)} width={54} />
         <Tooltip
-          cursor={{ stroke: C.axis, strokeDasharray: '3 3' }}
+          cursor={{ stroke: C.tick, strokeDasharray: '3 3' }}
           content={(props: TipProps<WhatIfPoint>) => {
             const p = hoveredRow(props)
             if (!p) return null
@@ -35,11 +34,33 @@ export default function ScenarioChart({ points, capacityMw, height = 300 }: { po
             )
           }}
         />
-        <Legend verticalAlign="top" align="right" height={24} iconType="plainline" wrapperStyle={{ fontSize: 11, color: C.ink2 }} />
-        {hasSolar && <Area type="monotone" dataKey="solar_gen_mw" name="Rooftop solar (MW)" stroke={C.solar} strokeWidth={1.5} fill={C.solar} fillOpacity={0.12} dot={false} isAnimationActive={false} legendType="rect" />}
+        <Legend verticalAlign="top" align="right" height={26} iconType="plainline" iconSize={14} wrapperStyle={legendStyle} />
         <Line type="monotone" dataKey="baseline_mw" name="Baseline forecast" stroke={C.forecast} strokeWidth={2} dot={false} isAnimationActive={false} />
         <Line type="monotone" dataKey="scenario_mw" name="Scenario" stroke={C.scenario} strokeWidth={2} dot={false} isAnimationActive={false} />
-        <ReferenceLine y={capacityMw} stroke={C.critical} strokeDasharray="6 4" label={{ value: `Planning capacity ${fmtInt(capacityMw)} MW`, position: 'insideTopRight', fill: C.critical, fontSize: 11 }} />
+        <ReferenceLine y={capacityMw} stroke={C.critical} strokeOpacity={0.8} strokeDasharray="6 4" label={{ value: `Grid capacity ${fmtInt(capacityMw)} MW`, position: 'insideTopRight', fill: C.critical, fontSize: 10.5 }} />
+      </ComposedChart>
+    </ResponsiveContainer>
+  )
+}
+
+/** Rooftop solar generation on its own axis, so the demand chart keeps one
+ *  scale and the contribution is still legible on its own. */
+export function SolarStrip({ points, height = 110 }: { points: WhatIfPoint[]; height?: number }) {
+  const max = Math.max(1, ...points.map((p) => p.solar_gen_mw))
+  return (
+    <ResponsiveContainer width="100%" height={height}>
+      <ComposedChart data={points} margin={{ top: 6, right: 16, left: 0, bottom: 0 }}>
+        <CartesianGrid stroke={C.grid} vertical={false} />
+        <XAxis dataKey="ts" tickFormatter={fmtTick} tick={tickStyle} axisLine={false} tickLine={false} interval={Math.max(0, Math.floor(points.length / 12) - 1)} />
+        <YAxis domain={[0, Math.ceil(max / 100) * 100]} tick={tickStyle} axisLine={false} tickLine={false} width={54} tickFormatter={(v: number) => fmtInt(v)} />
+        <Tooltip
+          cursor={{ stroke: C.tick, strokeDasharray: '3 3' }}
+          content={(props: TipProps<WhatIfPoint>) => {
+            const p = hoveredRow(props)
+            return p ? <TooltipBox title={fmtDateTime(p.ts)} rows={[{ label: 'Rooftop solar', value: fmtMW(p.solar_gen_mw), color: C.solar }]} /> : null
+          }}
+        />
+        <Area type="monotone" dataKey="solar_gen_mw" name="Rooftop solar" stroke={C.solar} strokeWidth={1.5} fill={C.solar} fillOpacity={0.15} dot={false} isAnimationActive={false} />
       </ComposedChart>
     </ResponsiveContainer>
   )
