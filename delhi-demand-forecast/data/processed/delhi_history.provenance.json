@@ -1,0 +1,22 @@
+{
+  "generated_at": "2026-09-04T19:10:50.287327+00:00",
+  "demand_source": "data/raw/delhi_load_history.csv",
+  "weather_source": "supplied_file:data/raw/delhi_weather_history.csv",
+  "weather_columns": [
+    "temperature_c",
+    "humidity",
+    "wind_speed"
+  ],
+  "weather_coverage_pct": {
+    "temperature_c": 100.0,
+    "humidity": 100.0,
+    "wind_speed": 100.0
+  },
+  "start": "2023-01-01T00:00:00+05:30",
+  "end": "2026-09-04T23:00:00+05:30",
+  "input_step_minutes": 5.0,
+  "aggregation": "demand_mw = hourly mean of 5-min readings; demand_max_mw = hourly max",
+  "rows_sub_hourly": 374823,
+  "rows_hourly": 31494,
+  "hours_with_partial_samples": 1144
+}

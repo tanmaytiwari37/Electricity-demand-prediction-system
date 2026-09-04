@@ -49,7 +49,7 @@ export default function Overview() {
       <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
         <KpiTile label="Current demand" value={current ? fmtInt(current.actual_mw) : '–'} unit="MW" sub={current ? `latest actual · ${fmtDayHour(current.ts)}` : actual.loading ? 'loading…' : 'unavailable'} tone="accent" />
         <KpiTile label="Forecast peak" value={f ? fmtInt(f.peak.predicted_mw) : '–'} unit="MW" sub={f ? `at ${fmtDayHour(f.peak.ts)} IST` : '–'} />
-        <KpiTile label="Grid capacity" value={fmtInt(capacityMw)} unit="MW" sub="planning assumption · editable in header" badge={<Badge kind="assumption" small />} />
+        <KpiTile label="Planning capacity" value={fmtInt(capacityMw)} unit="MW" sub="headroom assumption · editable in header" badge={<Badge kind="assumption" small />} />
         <KpiTile label="Headroom at peak" value={a ? fmtInt(a.headroom_mw) : '–'} unit="MW" sub={a ? `${fmtPct(a.headroom_pct)} of capacity free` : '–'} tone={tone} />
         <KpiTile label="Risk level" value={a ? <RiskPill level={a.risk_level} size="lg" /> : '–'} sub={a ? `${a.hours_at_risk} h at or above ${a.thresholds_pct.medium}%` : '–'} />
         <KpiTile label="Temperature" value={peakPoint?.temp_c != null ? fmtTemp(peakPoint.temp_c) : current?.temp_c != null ? fmtTemp(current.temp_c) : '–'} sub={peakPoint ? 'forecast at peak hour' : 'latest'} />

@@ -72,6 +72,7 @@ def build_status_response() -> dict:
         "model": model_card(),
         "assumptions": {
             "grid_capacity_mw": float(settings.capacity_mw),
+            "capacity_basis": "planning_assumption",
             "risk_thresholds_pct": RISK_THRESHOLDS_PCT,
             "discom_share": DISCOM_SHARE,
         },

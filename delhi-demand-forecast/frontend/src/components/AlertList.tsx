@@ -22,7 +22,7 @@ export default function AlertList({ alerts, compact = false }: { alerts: Alert[]
             </div>
             <div className="num mt-2 grid grid-cols-2 gap-2 text-xs sm:grid-cols-4">
               <Stat label="Peak in window" value={fmtMW(a.predicted_mw)} sub={fmtDateTime(a.ts)} />
-              <Stat label="Capacity" value={fmtMW(a.capacity_mw)} />
+              <Stat label="Planning capacity" value={fmtMW(a.capacity_mw)} />
               <Stat label="Headroom" value={fmtMW(a.headroom_mw)} />
               <Stat label="Headroom %" value={fmtPct(a.headroom_pct)} />
             </div>

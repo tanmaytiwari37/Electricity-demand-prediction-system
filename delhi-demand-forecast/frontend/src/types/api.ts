@@ -231,6 +231,7 @@ export interface StatusResponse {
   model: ModelCard
   assumptions: {
     grid_capacity_mw: number
+    capacity_basis?: string
     risk_thresholds_pct: { medium: number; high: number; critical: number }
     discom_share: Record<string, number>
   }

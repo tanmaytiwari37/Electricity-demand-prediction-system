@@ -34,7 +34,7 @@ export function CapacityInput({ compact }: { compact?: boolean }) {
   const commit = () => setCapacityMw(Number(draft))
   return (
     <label className="flex items-center gap-2 text-xs text-ink-2">
-      {!compact && <span className="whitespace-nowrap">Grid capacity</span>}
+      {!compact && <span className="whitespace-nowrap">Planning capacity</span>}
       <input
         type="number"
         min={1000}

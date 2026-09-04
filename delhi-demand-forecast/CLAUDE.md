@@ -89,10 +89,14 @@ Endpoints: `/api/health`, `/api/status`, `/api/forecast`, `/api/actual`, `/api/a
 ## Key domain numbers
 
 - Delhi: 28.6139 N, 77.2090 E
-- Default grid capacity assumption: **9,100 MW** (planning assumption, configurable from
-  the UI; derived in `backend/config.py` as record 5-min demand 8,705 MW x 1.05 reserve)
+- Default grid capacity assumption: **9,200 MW** (planning headroom assumption, configurable
+  from the UI; derived in `backend/config.py` as published record peak 8,748 MW x 1.05
+  reserve, cross-checked against SLDC's >9,000 MW 2026 projection; API reports
+  `capacity_basis = "planning_assumption"`)
 - Observed Delhi peak in our data: 8,705 MW 5-min / 8,653 MW hourly-mean (2026-06-29)
-- DISCOMs: BRPL (~40%), BYPL (~20%), TPDDL (~33%), NDMC (~5%), MES (~2%)
+- DISCOM shares (proportional allocation, not measured): BRPL 46%, TPDDL 28%, BYPL 22%,
+  NDMC 3%, MES 1%. Approximate upper bounds from published May 2026 non-coincident
+  DISCOM peaks normalised to the ~8,231 MW system peak; derivation in `backend/config.py`
 - Daily shape: night trough ~03:00–05:00, afternoon AC peak ~14:00–16:00, **second
   evening peak ~22:00–23:00 which is often the daily maximum**
 
@@ -137,11 +141,15 @@ Trained on REAL data via
   **rolling 28-day window** (`ml/evaluation/calibration.py`). Measured coverage
   on the test window, rolling rule: **78.2 %** one-step (static validation-split
   scheme gave 75.3 %). Still short of the nominal 80 %; say so.
-- **Recursive 24 h band coverage is only 40.3 %** (172 test days; 55 % at lead
-  1-6 h falling to 30 % at 19-24 h). The +1 %/hour widening heuristic in
-  `ml/inference/predictor.py` is far too small: recursive residuals are 1.7x the
-  one-step width at 1-6 h and 4.2x at 19-24 h. Fixing this needs a
-  lead-dependent band; not yet done.
+- **Recursive 24 h band is calibrated per lead hour** (`lead_quantiles` in the
+  artifact: P10/P90 of out-of-sample recursive residuals for each lead 1-24,
+  origins every 6 h, most recent 28 days; no global widening factor). Rolling
+  out-of-sample coverage on the test window: **75.2 %** overall, 76.7 / 74.6 /
+  74.8 / 74.8 % for leads 1-6 / 7-12 / 13-18 / 19-24 (was 40.3 % with the old
+  +1 %/h heuristic). Still short of 80 %; say so. Band width grows from 234 MW at
+  lead 1 to ~940 MW at lead 24 (4.4x the 1-step band) - wide, but that is the
+  honest error of a day-ahead recursive forecast. Beyond lead 24 the band is held
+  at the lead-24 width and the `interval_label` says so.
 - Summer-2025 backtest (model trained only on data before 2025-05-01, tested
   May-Sep 2025): 1-step MAE 69.7 vs baseline 335.8 (79 % better). Recursive
   24 h from 23:00: MAE 223 vs 339, daily-peak MAE 245 vs 320.

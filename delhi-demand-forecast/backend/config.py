@@ -25,19 +25,27 @@ DELHI_LON = 77.2090
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
 # --- Grid assumptions (ASSUMPTION provenance; editable via UI / query) ------
-# Grid capacity is a PLANNING ASSUMPTION, not a measured limit. It is editable in
-# the UI header and overridable per request via ``capacity_mw``.
-# Derivation from the real history (data/raw/delhi_load_history.csv, 2023-2026):
-#   highest 5-minute demand actually served   8,705 MW  (2026-06-29 15:00 IST)
-#   x 1.05 operating-reserve margin           9,140 MW  (serve the record peak while
-#                                                       keeping ~5 % spinning reserve,
-#                                                       a common planning norm)
-#   rounded to the nearest 100 MW             9,100 MW
-# The assumption must never sit below demonstrated served demand: the previous
-# 8,500 MW did (June 2026 peaked at 8,653 MW hourly-mean), which made the record
-# day read as a breach. DataStore.load() warns if loaded history ever exceeds
-# this value. Risk thresholds (85 / 92 / 97 %) are unchanged.
-GRID_CAPACITY_MW = 9100
+# Grid capacity is a PLANNING HEADROOM ASSUMPTION, not a physical or measured limit.
+# It is editable in the UI header, overridable per request via ``capacity_mw``, and
+# reported on /api/status as ``capacity_basis = "planning_assumption"``.
+# Derivation (published record + operating reserve):
+#   published record peak demand   8,748 MW  on 2026-06-29
+#       Republic World, "Delhi's peak power demand shatters previous record, touches 8,748 MW",
+#       https://www.republicworld.com/india/delhi-s-peak-power-demand-shatters-previous-record-touches-8748-mw-2026-06-30-130529
+#   x 1.05 operating-reserve margin  9,185 MW  (serve the record peak while keeping ~5 %
+#                                              spinning reserve, a common planning norm)
+#   rounded to the nearest 100 MW    9,200 MW
+#   cross-check: SLDC's pre-summer 2026 projection that peak load "may cross 9,000 MW"
+#       ANI / The Tribune, 2026-05-20,
+#       https://www.aninews.in/news/business/delhi-clocks-highest-power-demand-of-2026-as-summer-heat-intensifies-peak-load-may-cross-9000-mw20260520185355/
+#       https://www.tribuneindia.com/news/delhi-power-demand/delhi-clocks-highest-power-demand-of-2026-as-summer-heat-intensifies-peak-load-may-cross-9000-mw
+# Dataset validation: our own 5-minute peak is 8,705 MW at 2026-06-29 15:00 IST, within
+# 0.5 % of the published instantaneous record on the same day.
+# The value must never sit below demonstrated served demand: the original 8,500 MW did
+# (June 2026 hourly-mean peak 8,653 MW), which made the record day read as a breach.
+# DataStore.load() warns if loaded history ever exceeds this value.
+# Risk thresholds (85 / 92 / 97 %) are unchanged.
+GRID_CAPACITY_MW = 9200
 # DISCOM share of system demand: a PROPORTIONAL-ALLOCATION ratio, not a measurement.
 # Our load history is Delhi system-wide only; no row carries feeder or DISCOM load.
 # Derivation from published May 2026 peaks:

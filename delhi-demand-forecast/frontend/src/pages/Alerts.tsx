@@ -35,7 +35,7 @@ export default function Alerts() {
           <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
             <KpiTile label="Overall risk" value={<RiskPill level={a.risk_level} size="lg" />} sub={`next ${horizon} h`} />
             <KpiTile label="Forecast peak" value={fmtInt(a.peak_mw)} unit="MW" sub={fmtDateTime(a.peak_ts)} tone="accent" />
-            <KpiTile label="Capacity" value={fmtInt(a.grid_capacity_mw)} unit="MW" badge={<Badge kind="assumption" small />} />
+            <KpiTile label="Planning capacity" value={fmtInt(a.grid_capacity_mw)} unit="MW" badge={<Badge kind="assumption" small />} />
             <KpiTile label="Headroom" value={fmtInt(a.headroom_mw)} unit="MW" sub={fmtPct(a.headroom_pct)} tone={tone} />
             <KpiTile label="Peak utilisation" value={fmtPct(a.peak_utilization_pct)} tone={tone} />
             <KpiTile label="Hours at risk" value={a.hours_at_risk} unit="h" sub={`≥ ${a.thresholds_pct.medium}% of capacity`} />

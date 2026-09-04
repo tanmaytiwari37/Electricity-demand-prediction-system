@@ -28,3 +28,8 @@ npm-debug.log*
 .idea/
 .DS_Store
 Thumbs.db
+
+# Exceptions: the app must be runnable from a fresh clone
+!data/processed/delhi_history.csv
+!data/processed/delhi_history.provenance.json
+!ml/models/model.joblib

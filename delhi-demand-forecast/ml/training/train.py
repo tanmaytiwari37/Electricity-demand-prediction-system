@@ -23,9 +23,13 @@ from sklearn.ensemble import HistGradientBoostingRegressor, RandomForestRegresso
 from sklearn.inspection import permutation_importance
 
 from ml.baseline import BASELINES
-from ml.evaluation.calibration import quantile_band, recent_window_band, rolling_coverage, static_coverage
+from ml.evaluation.calibration import (
+    lead_band, quantile_band, recent_window_band, recursive_residuals_by_lead, rolling_coverage,
+    rolling_lead_coverage, static_coverage,
+)
 from ml.evaluation.metrics import evaluate, improvement_pct
 from ml.features import FEATURE_LABELS, build_features, select_feature_columns, training_frame
+from ml.inference.predictor import DemandPredictor
 from ml.schema import TARGET, TIMESTAMP
 
 ARTIFACT_VERSION = 1
@@ -39,6 +43,8 @@ class TrainConfig:
     random_state: int = 42
     importance_sample: int = 2000  # rows used for permutation importance
     calibration_window_days: int = 28  # recent out-of-sample residuals that set the served P10-P90 band
+    calibration_horizon: int = 24  # leads with their own recursive band; beyond this the band is held flat
+    calibration_origin_step_hours: int = 6  # spacing of forecast origins used to collect recursive residuals
     data_source: str = "real"  # "real" | "demo" - stored in the artifact, surfaced in the UI
     notes: str = ""
 
@@ -52,6 +58,7 @@ class TrainingResult:
     feature_importance: list[dict[str, Any]]
     residual_quantiles: dict[str, float]
     metadata: dict[str, Any] = field(default_factory=dict)
+    lead_quantiles: dict[str, Any] | None = None
 
     def summary(self) -> dict[str, Any]:
         return {
@@ -60,6 +67,7 @@ class TrainingResult:
             "metrics": self.metrics,
             "feature_importance": self.feature_importance,
             "residual_quantiles": self.residual_quantiles,
+            "lead_quantiles": self.lead_quantiles,
             "metadata": self.metadata,
         }
 
@@ -172,6 +180,26 @@ def train_from_dataframe(df: pd.DataFrame, config: TrainConfig | None = None) ->
         calibration = {"method": "static_validation_split", "coverage_pct": round(static_cov, 1)}
         coverage = static_cov
 
+    # Recursive band, calibrated PER LEAD HOUR: the 24 h forecast feeds its own predictions
+    # back as lags, so its error grows with lead far faster than any global widening factor
+    # captures. Collect out-of-sample recursive residuals over the test window (actual
+    # weather, so weather-forecast error is excluded), take each lead's P10/P90 over the most
+    # recent window for serving, and score coverage with the same rolling rule.
+    served = DemandPredictor({"model": final_model, "model_name": best_name, "feature_columns": feature_cols,
+                              "residual_quantiles": residual_quantiles})
+    rec_resid = recursive_residuals_by_lead(served, df, horizon=config.calibration_horizon,
+                                            origin_step_hours=config.calibration_origin_step_hours, start=ts_te.iloc[0])
+    lead_quantiles = lead_band(rec_resid, config.calibration_window_days, config.calibration_horizon)
+    rec_cov = rolling_lead_coverage(rec_resid, config.calibration_window_days)
+    calibration["recursive"] = {
+        "method": "per_lead_rolling_recent_window" if lead_quantiles else "unavailable",
+        "horizon": config.calibration_horizon,
+        "origin_step_hours": config.calibration_origin_step_hours,
+        "n_origins": int(rec_resid["origin"].nunique()) if not rec_resid.empty else 0,
+        "coverage": rec_cov,
+        "band_width_mw_by_lead": [round(hi - lo, 1) for lo, hi in zip(lead_quantiles["p10"], lead_quantiles["p90"])] if lead_quantiles else None,
+    }
+
     primary_baseline = "same_hour_previous_day" if "same_hour_previous_day" in baseline_metrics else next(iter(baseline_metrics), None)
     base_mae = baseline_metrics[primary_baseline]["test"]["mae"] if primary_baseline else float("nan")
     model_mae = candidate_metrics[best_name]["test"]["mae"]
@@ -200,7 +228,7 @@ def train_from_dataframe(df: pd.DataFrame, config: TrainConfig | None = None) ->
         "config": asdict(config),
         "notes": config.notes,
     }
-    return TrainingResult(final_model, best_name, feature_cols, metrics, importance, residual_quantiles, metadata)
+    return TrainingResult(final_model, best_name, feature_cols, metrics, importance, residual_quantiles, metadata, lead_quantiles)
 
 
 def save_artifact(result: TrainingResult, path: str | Path) -> Path:
@@ -214,6 +242,7 @@ def save_artifact(result: TrainingResult, path: str | Path) -> Path:
             "metrics": result.metrics,
             "feature_importance": result.feature_importance,
             "residual_quantiles": result.residual_quantiles,
+            "lead_quantiles": result.lead_quantiles,
             "metadata": result.metadata,
         },
         path,

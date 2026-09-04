@@ -43,6 +43,7 @@ def test_status_reports_demo_mode(client):
     assert body["history"]["label"] == "SIMULATED DEMO"
     assert body["weather"]["source"] == "demo"
     assert body["assumptions"]["grid_capacity_mw"] == settings.capacity_mw
+    assert body["assumptions"]["capacity_basis"] == "planning_assumption"
 
 
 def test_cors_preflight(client):

@@ -7,9 +7,13 @@ predictions beyond that. Weather features for future hours come from the
 weather forecast frame the caller supplies.
 
 Prediction band = point forecast + empirical P10/P90 of the model's recent
-out-of-sample residuals (rolling-window calibration, see
-``ml.evaluation.calibration``), widened linearly with lead time because
-recursive errors compound.
+out-of-sample *recursive* residuals, calibrated separately for every lead hour
+(``lead_quantiles`` in the artifact; see ``ml.evaluation.calibration``). No
+global widening factor. Beyond the last calibrated lead the band is held at
+that lead's width and the label says so. The band always contains the point
+forecast (a biased residual quantile can only widen it, never cut it off).
+Artifacts without ``lead_quantiles`` fall back to the legacy 1-step band
+widened by +1 % per lead hour.
 """
 
 from __future__ import annotations
@@ -25,7 +29,7 @@ from ml.calendar import holidays_for_range
 from ml.features import add_calendar_features, add_weather_features
 from ml.schema import TARGET, TIMESTAMP, WEATHER_COLUMNS
 
-BAND_GROWTH_PER_HOUR = 0.01  # +1 % band width per lead hour (heuristic, labelled in UI)
+BAND_GROWTH_PER_HOUR = 0.01  # legacy fallback only: +1 % band width per lead hour
 MIN_HISTORY_HOURS = 168
 
 
@@ -41,6 +45,7 @@ class DemandPredictor:
         self.metrics: dict = artifact.get("metrics", {})
         self.feature_importance: list[dict] = artifact.get("feature_importance", [])
         self.residual_quantiles: dict = artifact.get("residual_quantiles", {"p10": 0.0, "p90": 0.0})
+        self.lead_quantiles: dict | None = artifact.get("lead_quantiles") or None
         self.metadata: dict = artifact.get("metadata", {})
 
     @classmethod
@@ -50,6 +55,14 @@ class DemandPredictor:
     @property
     def data_source(self) -> str:
         return self.metadata.get("data_source", "unknown")
+
+    @property
+    def band_method(self) -> str:
+        return "per_lead" if self.lead_quantiles else "legacy_widened"
+
+    @property
+    def calibrated_horizon(self) -> int:
+        return len(self.lead_quantiles["p10"]) if self.lead_quantiles else 0
 
     # ------------------------------------------------------------------ #
     def predict_horizon(self, history: pd.DataFrame, future_weather: pd.DataFrame | None, horizon: int) -> pd.DataFrame:
@@ -106,16 +119,16 @@ class DemandPredictor:
             y[k] = preds[i]
 
         lead = np.arange(1, horizon + 1)
-        widen = 1 + BAND_GROWTH_PER_HOUR * lead
-        p10, p90 = self.residual_quantiles.get("p10", 0.0), self.residual_quantiles.get("p90", 0.0)
-        out = pd.DataFrame(
-            {
-                TIMESTAMP: future_ts,
-                "predicted_mw": preds,
-                "lower_mw": preds + p10 * widen,
-                "upper_mw": preds + p90 * widen,
-            }
-        )
+        if self.lead_quantiles:
+            p10s, p90s = np.asarray(self.lead_quantiles["p10"], float), np.asarray(self.lead_quantiles["p90"], float)
+            idx = np.minimum(lead - 1, len(p10s) - 1)  # hold the last calibrated lead flat beyond it
+            lower = preds + np.minimum(p10s[idx], 0.0)
+            upper = preds + np.maximum(p90s[idx], 0.0)
+        else:
+            widen = 1 + BAND_GROWTH_PER_HOUR * lead
+            p10, p90 = self.residual_quantiles.get("p10", 0.0), self.residual_quantiles.get("p90", 0.0)
+            lower, upper = preds + p10 * widen, preds + p90 * widen
+        out = pd.DataFrame({TIMESTAMP: future_ts, "predicted_mw": preds, "lower_mw": lower, "upper_mw": upper})
         for col in WEATHER_COLUMNS:
             if col in future.columns:
                 out[col] = future[col].to_numpy()

@@ -18,7 +18,7 @@ The app never presents simulated data as real Delhi operational data. Every pane
 | **MODEL PREDICTION** | output of the trained model (the badge also says what data it was trained on) |
 | **HEURISTIC ESTIMATE** | same-hour-last-7-days fallback while no model is loaded |
 | **LIVE / CACHED / SIMULATED WEATHER** | Open-Meteo forecast, its cache, or the demo generator |
-| **ASSUMPTION** | editable demo parameter (grid capacity 9,100 MW planning assumption, risk thresholds 85/92/97 %) |
+| **ASSUMPTION** | editable demo parameter (grid capacity 9,200 MW planning assumption, risk thresholds 85/92/97 %) |
 | **RULE-BASED ADVICE** | system-generated recommendation, not an operational instruction |
 
 Until the real dataset is provided the app runs entirely in **DEMO MODE**.

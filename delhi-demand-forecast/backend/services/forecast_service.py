@@ -84,6 +84,16 @@ def forecast_frame(horizon: int, temp_delta_c: float = 0.0) -> tuple[pd.DataFram
     return result
 
 
+def _interval_label(predictor, method: str, horizon: int) -> str:
+    if method != "ml_model" or predictor is None:
+        return "Heuristic +/-5 % band (no trained model)"
+    if predictor.band_method == "per_lead":
+        n = predictor.calibrated_horizon
+        label = "Empirical P10-P90 band calibrated per lead hour from recent out-of-sample recursive residuals"
+        return label + (f"; held at the {n} h width beyond {n} h (uncalibrated)" if horizon > n else "")
+    return "Empirical P10-P90 band from recent out-of-sample 1-step residuals, widened +1 % per lead hour (legacy)"
+
+
 def peak_of(frame: pd.DataFrame, col: str = "predicted_mw") -> dict:
     i = frame[col].idxmax()
     return {"ts": iso(frame.loc[i, "timestamp"]), "predicted_mw": mw(frame.loc[i, col])}
@@ -113,10 +123,7 @@ def build_forecast_response(horizon: int, capacity_mw: float | None = None) -> d
         "model_name": predictor.model_name if (predictor and method == "ml_model") else None,
         "model_data_source": predictor.data_source if (predictor and method == "ml_model") else None,
         "weather_source": store.weather_source,
-        "interval_label": (
-            "Empirical P10-P90 band from recent out-of-sample residuals, widened with lead time"
-            if method == "ml_model" else "Heuristic +/-5 % band (no trained model)"
-        ),
+        "interval_label": _interval_label(predictor, method, horizon),
         "peak": peak_of(frame),
         "points": points,
     }
