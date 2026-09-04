@@ -41,13 +41,17 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       try {
         const s = await api.status()
         if (cancelled) return
-        setStatus((prev) => {
-          if (prev && prev.forecast.method !== s.forecast.method) setVersion((v) => v + 1)
-          return s
-        })
-        setStatusError(null)
-        // Poll fast while the demo model is training, slowly otherwise.
-        timer = window.setTimeout(poll, s.model.status === 'training' ? 4_000 : 60_000)
+        if (s && typeof s === 'object' && 'assumptions' in s && s.assumptions) {
+          setStatus((prev) => {
+            if (prev && prev.forecast.method !== s.forecast.method) setVersion((v) => v + 1)
+            return s
+          })
+          setStatusError(null)
+          // Poll fast while the demo model is training, slowly otherwise.
+          timer = window.setTimeout(poll, s.model.status === 'training' ? 4_000 : 60_000)
+        } else {
+          throw new ApiError('Invalid status payload received from API', 'http', 500)
+        }
       } catch (e) {
         if (cancelled) return
         setStatusError(e instanceof ApiError ? e : new ApiError(String(e), 'network', null))
@@ -61,7 +65,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     }
   }, [tick])
 
-  const defaultCapacityMw = status?.assumptions.grid_capacity_mw ?? 9200
+  const defaultCapacityMw = status?.assumptions?.grid_capacity_mw ?? 9200
   const capacityMw = capacityOverride ?? defaultCapacityMw
 
   const setCapacityMw = useCallback(

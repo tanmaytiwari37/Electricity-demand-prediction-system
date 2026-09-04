@@ -54,6 +54,9 @@ function toApiError(err: unknown): ApiError {
 async function get<T>(path: string, params?: Record<string, unknown>, signal?: AbortSignal): Promise<T> {
   try {
     const r = await http.get<T>(path, { params, signal })
+    if (typeof r.data === 'string' && (r.data as string).trim().startsWith('<')) {
+      throw new Error('API returned HTML instead of JSON. Ensure VITE_API_BASE is set to the backend URL.')
+    }
     return r.data
   } catch (err) {
     throw toApiError(err)
@@ -75,6 +78,9 @@ export const api = {
   whatIf: async (body: WhatIfRequest, signal?: AbortSignal): Promise<WhatIfResponse> => {
     try {
       const r = await http.post<WhatIfResponse>('/whatif', body, { signal })
+      if (typeof r.data === 'string' && (r.data as string).trim().startsWith('<')) {
+        throw new Error('API returned HTML instead of JSON. Ensure VITE_API_BASE is set to the backend URL.')
+      }
       return r.data
     } catch (err) {
       throw toApiError(err)
