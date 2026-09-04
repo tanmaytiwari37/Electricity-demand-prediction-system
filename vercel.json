@@ -1,0 +1,9 @@
+{
+  "buildCommand": "npm run build --prefix delhi-demand-forecast/frontend",
+  "outputDirectory": "delhi-demand-forecast/frontend/dist",
+  "installCommand": "npm install --prefix delhi-demand-forecast/frontend",
+  "framework": "vite",
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}

@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: peakwatch-api
+    runtime: python
+    plan: free
+    rootDir: delhi-demand-forecast
+    buildCommand: pip install -r backend/requirements.txt
+    startCommand: python -m backend.main
+    healthCheckPath: /api/health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.13.7
+      - key: PEAKWATCH_HISTORY_CSV
+        value: data/processed/delhi_history.csv
+      - key: PEAKWATCH_CAPACITY_MW
+        value: "9200"
+      - key: PEAKWATCH_FRONTEND_ORIGIN
+        sync: false
