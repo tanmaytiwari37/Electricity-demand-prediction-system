@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import ActualChart from '../components/charts/ActualChart.tsx'
 import ForecastChart from '../components/charts/ForecastChart.tsx'
 import AlertList from '../components/AlertList.tsx'
+import AllocationNotice from '../components/AllocationNotice.tsx'
 import FeederTable from '../components/FeederTable.tsx'
 import ScenarioPanel from '../components/ScenarioPanel.tsx'
 import KpiTile from '../components/ui/KpiTile.tsx'
@@ -48,7 +49,7 @@ export default function Overview() {
       <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
         <KpiTile label="Current demand" value={current ? fmtInt(current.actual_mw) : '–'} unit="MW" sub={current ? `latest actual · ${fmtDayHour(current.ts)}` : actual.loading ? 'loading…' : 'unavailable'} tone="accent" />
         <KpiTile label="Forecast peak" value={f ? fmtInt(f.peak.predicted_mw) : '–'} unit="MW" sub={f ? `at ${fmtDayHour(f.peak.ts)} IST` : '–'} />
-        <KpiTile label="Grid capacity" value={fmtInt(capacityMw)} unit="MW" sub="editable in header" badge={<Badge kind="assumption" small />} />
+        <KpiTile label="Grid capacity" value={fmtInt(capacityMw)} unit="MW" sub="planning assumption · editable in header" badge={<Badge kind="assumption" small />} />
         <KpiTile label="Headroom at peak" value={a ? fmtInt(a.headroom_mw) : '–'} unit="MW" sub={a ? `${fmtPct(a.headroom_pct)} of capacity free` : '–'} tone={tone} />
         <KpiTile label="Risk level" value={a ? <RiskPill level={a.risk_level} size="lg" /> : '–'} sub={a ? `${a.hours_at_risk} h at or above ${a.thresholds_pct.medium}%` : '–'} />
         <KpiTile label="Temperature" value={peakPoint?.temp_c != null ? fmtTemp(peakPoint.temp_c) : current?.temp_c != null ? fmtTemp(current.temp_c) : '–'} sub={peakPoint ? 'forecast at peak hour' : 'latest'} />
@@ -83,8 +84,13 @@ export default function Overview() {
       </div>
 
       <div className="grid gap-4 xl:grid-cols-3">
-        <Panel title="Area risk at forecast peak" subtitle="System forecast split by DISCOM share." badges={<Badge kind="simulated" small />} actions={<Link to="/areas" className="text-[11px] text-series-blue hover:underline">Area view →</Link>}>
-          {feeders.loading && !feeders.data ? <Loading /> : feeders.error ? <ErrorState error={feeders.error} onRetry={feeders.refetch} compact /> : feeders.data && <FeederTable feeders={feeders.data.feeders} compact />}
+        <Panel className="border-dashed border-series-magenta/50" title="Area risk at forecast peak (allocated)" subtitle="System forecast split by configured DISCOM share. Not measured." badges={<Badge kind="allocated" small />} actions={<Link to="/areas" className="text-[11px] text-series-blue hover:underline">Area view →</Link>}>
+          {feeders.loading && !feeders.data ? <Loading /> : feeders.error ? <ErrorState error={feeders.error} onRetry={feeders.refetch} compact /> : feeders.data && (
+            <>
+              <FeederTable feeders={feeders.data.feeders} compact />
+              <AllocationNotice shares={status?.assumptions.discom_share} compact />
+            </>
+          )}
         </Panel>
 
         <Panel title="Predicted vs actual, last 24 h" subtitle="1-hour-ahead backtest against recorded demand." badges={act && <Badge kind={act.prediction_method.startsWith('ml') ? 'backtest' : 'heuristic'} small />}>

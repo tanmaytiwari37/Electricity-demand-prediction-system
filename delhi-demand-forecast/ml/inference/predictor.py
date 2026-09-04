@@ -6,8 +6,10 @@ prediction, forecast h+2 using it as ``lag_1h`` and so on. Lags of 24 h and
 predictions beyond that. Weather features for future hours come from the
 weather forecast frame the caller supplies.
 
-Prediction band = point forecast + empirical validation residual P10/P90,
-widened linearly with lead time because recursive errors compound.
+Prediction band = point forecast + empirical P10/P90 of the model's recent
+out-of-sample residuals (rolling-window calibration, see
+``ml.evaluation.calibration``), widened linearly with lead time because
+recursive errors compound.
 """
 
 from __future__ import annotations

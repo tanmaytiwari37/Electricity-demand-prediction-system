@@ -25,13 +25,39 @@ DELHI_LON = 77.2090
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
 # --- Grid assumptions (ASSUMPTION provenance; editable via UI / query) ------
-GRID_CAPACITY_MW = 8500
+# Grid capacity is a PLANNING ASSUMPTION, not a measured limit. It is editable in
+# the UI header and overridable per request via ``capacity_mw``.
+# Derivation from the real history (data/raw/delhi_load_history.csv, 2023-2026):
+#   highest 5-minute demand actually served   8,705 MW  (2026-06-29 15:00 IST)
+#   x 1.05 operating-reserve margin           9,140 MW  (serve the record peak while
+#                                                       keeping ~5 % spinning reserve,
+#                                                       a common planning norm)
+#   rounded to the nearest 100 MW             9,100 MW
+# The assumption must never sit below demonstrated served demand: the previous
+# 8,500 MW did (June 2026 peaked at 8,653 MW hourly-mean), which made the record
+# day read as a breach. DataStore.load() warns if loaded history ever exceeds
+# this value. Risk thresholds (85 / 92 / 97 %) are unchanged.
+GRID_CAPACITY_MW = 9100
+# DISCOM share of system demand: a PROPORTIONAL-ALLOCATION ratio, not a measurement.
+# Our load history is Delhi system-wide only; no row carries feeder or DISCOM load.
+# Derivation from published May 2026 peaks:
+#   BRPL  3,762 MW, BYPL 1,838 MW  (Millennium Post, "Power demand scales season high",
+#                                   https://www.millenniumpost.in/delhi/power-demand-scales-season-high-660908)
+#   TPDDL 2,331 MW                 (same coverage of the May 2026 heatwave)
+#   system peak ~8,231 MW          (The Print, https://theprint.in/india/delhis-peak-demand-soars-to-seasons-highest-8231-mw-amid-heatwave/2937867/)
+#   BRPL 3762/8231 = 0.457, BYPL 1838/8231 = 0.223, TPDDL 2331/8231 = 0.283 (sum 0.963);
+#   residual 300 MW = 0.036 assigned to NDMC and MES at their prior 5:2 ratio (0.026 / 0.011).
+# LIMITATION: each figure is that DISCOM's OWN seasonal peak, which is NOT coincident
+# with the system peak. Non-coincident peaks over-state a DISCOM's contribution at the
+# system peak hour, so the implied shares are upper bounds and the normalised ratios
+# are approximate. The set is normalised to sum to 1.0 so allocated area loads add up
+# to the system forecast. Real feeder telemetry would replace this table entirely.
 DISCOM_SHARE = {
-    "BRPL": 0.40,
-    "BYPL": 0.20,
-    "TPDDL": 0.33,
-    "NDMC": 0.05,
-    "MES": 0.02,
+    "BRPL": 0.457,
+    "BYPL": 0.223,
+    "TPDDL": 0.283,
+    "NDMC": 0.026,
+    "MES": 0.011,
 }
 
 # Simulated headroom of each DISCOM's network over its share of system peak.

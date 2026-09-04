@@ -4,7 +4,8 @@ The split is strictly chronological (train | validation | test) so no future
 information leaks backwards. Candidates are compared on the validation set,
 the winner is scored once on the untouched test set, then refit on
 train+validation for deployment. Prediction bands come from the empirical
-P10/P90 of validation residuals (no distributional assumption).
+P10/P90 of the deployed model's out-of-sample residuals over a rolling recent
+window (see ``ml.evaluation.calibration``); no distributional assumption.
 """
 
 from __future__ import annotations
@@ -22,6 +23,7 @@ from sklearn.ensemble import HistGradientBoostingRegressor, RandomForestRegresso
 from sklearn.inspection import permutation_importance
 
 from ml.baseline import BASELINES
+from ml.evaluation.calibration import quantile_band, recent_window_band, rolling_coverage, static_coverage
 from ml.evaluation.metrics import evaluate, improvement_pct
 from ml.features import FEATURE_LABELS, build_features, select_feature_columns, training_frame
 from ml.schema import TARGET, TIMESTAMP
@@ -36,6 +38,7 @@ class TrainConfig:
     candidates: tuple[str, ...] = ("hist_gradient_boosting", "random_forest")
     random_state: int = 42
     importance_sample: int = 2000  # rows used for permutation importance
+    calibration_window_days: int = 28  # recent out-of-sample residuals that set the served P10-P90 band
     data_source: str = "real"  # "real" | "demo" - stored in the artifact, surfaced in the UI
     notes: str = ""
 
@@ -120,17 +123,11 @@ def train_from_dataframe(df: pd.DataFrame, config: TrainConfig | None = None) ->
     best = fitted[best_name]
     candidate_metrics[best_name]["test"] = evaluate(y_te, best.predict(X_te), ts_te)
 
-    # Empirical residual band from validation residuals of the chosen model
-    resid = y_va.to_numpy() - best.predict(X_va)
-    residual_quantiles = {
-        "p10": float(np.quantile(resid, 0.10)),
-        "p50": float(np.quantile(resid, 0.50)),
-        "p90": float(np.quantile(resid, 0.90)),
-        "std": float(np.std(resid)),
-    }
-    lower = best.predict(X_te) + residual_quantiles["p10"]
-    upper = best.predict(X_te) + residual_quantiles["p90"]
-    coverage = float(np.mean((y_te.to_numpy() >= lower) & (y_te.to_numpy() <= upper)) * 100)
+    # Static band (original scheme): validation-split quantiles applied to the whole
+    # test window. Kept only as the comparison figure; it under-covers when error
+    # size drifts with the season.
+    static_band = quantile_band(y_va.to_numpy() - best.predict(X_va))
+    static_cov = static_coverage(y_te.to_numpy() - best.predict(X_te), static_band)
 
     # Permutation importance on a test subsample (model-agnostic, no fabrication)
     n_imp = min(config.importance_sample, len(X_te))
@@ -151,6 +148,30 @@ def train_from_dataframe(df: pd.DataFrame, config: TrainConfig | None = None) ->
     final_model = make_candidate(best_name, config.random_state)
     final_model.fit(pd.concat([X_tr, X_va]), pd.concat([y_tr, y_va]))
 
+    # Served band: P10/P90 of the *deployed* model's residuals on the held-out test
+    # window (out-of-sample for it too), taken over the most recent calibration
+    # window. Coverage is measured with the same rolling rule, so the reported
+    # number is what the served band would have achieved, hour by hour.
+    window_h = config.calibration_window_days * 24
+    resid_te = y_te.to_numpy() - final_model.predict(X_te)
+    rolling = rolling_coverage(resid_te, window_h)
+    if rolling["n_scored"] > 0:
+        residual_quantiles = recent_window_band(resid_te, window_h)
+        n_cal = min(window_h, len(ts_te))
+        calibration = {
+            "method": "rolling_recent_window",
+            "window_days": config.calibration_window_days,
+            "coverage_pct": rolling["coverage_pct"],
+            "n_scored": rolling["n_scored"],
+            "calibrated_on": {"start": ts_te.iloc[-n_cal].isoformat(), "end": ts_te.iloc[-1].isoformat()},
+            "static_validation_split_coverage_pct": round(static_cov, 1),
+        }
+        coverage = rolling["coverage_pct"]
+    else:  # test window shorter than a week: fall back to the static scheme, labelled
+        residual_quantiles = static_band
+        calibration = {"method": "static_validation_split", "coverage_pct": round(static_cov, 1)}
+        coverage = static_cov
+
     primary_baseline = "same_hour_previous_day" if "same_hour_previous_day" in baseline_metrics else next(iter(baseline_metrics), None)
     base_mae = baseline_metrics[primary_baseline]["test"]["mae"] if primary_baseline else float("nan")
     model_mae = candidate_metrics[best_name]["test"]["mae"]
@@ -164,6 +185,7 @@ def train_from_dataframe(df: pd.DataFrame, config: TrainConfig | None = None) ->
         "model_mae": model_mae,
         "improvement_pct": improvement_pct(base_mae, model_mae),
         "interval_coverage_pct": round(coverage, 1),
+        "interval_calibration": calibration,
         "rows": {"train": len(X_tr), "validation": len(X_va), "test": len(X_te)},
         "test_period": {"start": ts_te.iloc[0].isoformat(), "end": ts_te.iloc[-1].isoformat()},
     }

@@ -19,6 +19,8 @@ os.environ.setdefault("PEAKWATCH_DEMO_HISTORY_DAYS", "120")
 _MODEL_DIR = Path(__file__).resolve().parent / "_artifacts"
 os.environ.setdefault("PEAKWATCH_DEMO_MODEL_PATH", str(_MODEL_DIR / "test_demo_model.joblib"))
 os.environ.setdefault("PEAKWATCH_MODEL_PATH", str(_MODEL_DIR / "missing.joblib"))
+# Always test in DEMO MODE even when a local .env points the app at the real CSV.
+os.environ.setdefault("PEAKWATCH_HISTORY_CSV", str(_MODEL_DIR / "missing_history.csv"))
 
 IST = ZoneInfo("Asia/Kolkata")
 NOW = datetime(2026, 9, 4, 10, tzinfo=IST)

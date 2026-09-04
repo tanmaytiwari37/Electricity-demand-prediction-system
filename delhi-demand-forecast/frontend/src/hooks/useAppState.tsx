@@ -61,7 +61,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     }
   }, [tick])
 
-  const defaultCapacityMw = status?.assumptions.grid_capacity_mw ?? 8500
+  const defaultCapacityMw = status?.assumptions.grid_capacity_mw ?? 9100
   const capacityMw = capacityOverride ?? defaultCapacityMw
 
   const setCapacityMw = useCallback(

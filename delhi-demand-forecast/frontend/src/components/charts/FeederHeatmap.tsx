@@ -3,7 +3,7 @@ import type { Feeder, FeederHour } from '../../types/api.ts'
 import { fmtDateTime, fmtHour, fmtPct } from '../../utils/format.ts'
 import { rampColor } from './theme.ts'
 
-/** Area x hour utilisation grid. Sequential blue ramp for magnitude; cells at
+/** Area x hour ALLOCATED utilisation grid (system forecast × share; not measured). Sequential blue ramp for magnitude; cells at
  *  or above the critical threshold get a red ring plus a mark so the state is
  *  never colour-alone. */
 export default function FeederHeatmap({ feeders, hourly, warningPct = 85, criticalPct = 95 }: { feeders: Feeder[]; hourly: FeederHour[]; warningPct?: number; criticalPct?: number }) {
@@ -35,7 +35,8 @@ export default function FeederHeatmap({ feeders, hourly, warningPct = 85, critic
         <div className="pointer-events-none absolute right-2 top-0 rounded border border-line-strong bg-surface-2/95 px-3 py-2 text-xs shadow-lg">
           <div className="font-semibold">{hover.f.name}</div>
           <div className="text-ink-2">{fmtDateTime(hover.h.ts)}</div>
-          <div className="num mt-1 font-semibold">{fmtPct(hover.v)} of capacity</div>
+          <div className="num mt-1 font-semibold italic">≈ {fmtPct(hover.v)} of assumed area capacity</div>
+          <div className="text-[10px] text-series-magenta">allocated, not measured</div>
         </div>
       )}
     </div>
@@ -55,7 +56,7 @@ function FeederRow({ f, hourly, max, warningPct, criticalPct, onHover }: {
         return (
           <button
             key={h.ts}
-            aria-label={`${f.name} ${fmtHour(h.ts)}: ${fmtPct(v)}`}
+            aria-label={`${f.name} ${fmtHour(h.ts)}: allocated ${fmtPct(v)}`}
             onMouseEnter={() => onHover({ f, h, v })}
             onMouseLeave={() => onHover(null)}
             onFocus={() => onHover({ f, h, v })}

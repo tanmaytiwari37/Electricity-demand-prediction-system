@@ -114,7 +114,7 @@ def build_forecast_response(horizon: int, capacity_mw: float | None = None) -> d
         "model_data_source": predictor.data_source if (predictor and method == "ml_model") else None,
         "weather_source": store.weather_source,
         "interval_label": (
-            "Empirical P10-P90 band from validation residuals, widened with lead time"
+            "Empirical P10-P90 band from recent out-of-sample residuals, widened with lead time"
             if method == "ml_model" else "Heuristic +/-5 % band (no trained model)"
         ),
         "peak": peak_of(frame),

@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import AllocationNotice from '../components/AllocationNotice.tsx'
 import AreaMap from '../components/charts/AreaMap.tsx'
 import FeederHeatmap from '../components/charts/FeederHeatmap.tsx'
 import FeederTable from '../components/FeederTable.tsx'
@@ -11,6 +12,9 @@ import { useAppState } from '../hooks/useAppState.tsx'
 import { api } from '../services/api.ts'
 import type { Feeder } from '../types/api.ts'
 import { fmtDateTime, fmtInt } from '../utils/format.ts'
+
+/** Dashed magenta frame = proportional allocation, never a measured value. */
+const ALLOC_PANEL = 'border-dashed border-series-magenta/50'
 
 export default function Areas() {
   const { capacityMw, version, status } = useAppState()
@@ -35,21 +39,26 @@ export default function Areas() {
 
   const worst = view ? [...view.rows].sort((a, b) => b.utilization_pct - a.utilization_pct)[0] : null
   const shares = status?.assumptions.discom_share
+  const allocBadge = <Badge kind="allocated" small />
 
   return (
     <div className="flex flex-col gap-4">
       <div>
         <h1 className="text-lg font-bold">Area and DISCOM risk</h1>
-        <p className="text-xs text-ink-3">The system forecast split across Delhi's five distribution licensees. Real feeder telemetry is not public, so the split uses configured shares and simulated capacities.</p>
+        <p className="text-xs text-ink-3">
+          The system-level forecast split across Delhi's five distribution licensees by configured share ratios. Our load data is system-wide only; nothing on this page is a feeder or DISCOM measurement.
+        </p>
       </div>
+
+      <AllocationNotice shares={shares} />
 
       {feeders.loading && !d ? <Loading height="h-64" /> : feeders.error ? <ErrorState error={feeders.error} onRetry={feeders.refetch} /> : d && view && (
         <>
           <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-            <KpiTile label="System demand" value={fmtInt(view.system)} unit="MW" sub={fmtDateTime(view.ts)} tone="accent" />
-            <KpiTile label="Most loaded area" value={worst?.discom ?? '–'} sub={worst ? `${worst.utilization_pct.toFixed(1)}% of capacity` : '–'} tone={worst?.status === 'critical' ? 'critical' : worst?.status === 'warning' ? 'warning' : 'default'} />
-            <KpiTile label="Areas in warning+" value={view.rows.filter((r) => r.status !== 'ok').length} unit={`of ${view.rows.length}`} />
-            <KpiTile label="Basis" value={hourIdx == null ? (d.basis === 'forecast_peak' ? 'Forecast peak hour' : d.basis) : 'Selected hour'} sub={d.forecast_method === 'ml_model' ? 'model forecast' : 'heuristic forecast'} />
+            <KpiTile label="System forecast" value={fmtInt(view.system)} unit="MW" sub={fmtDateTime(view.ts)} tone="accent" badge={<Badge kind={methodKind(d.forecast_method)} small />} />
+            <KpiTile label="Most loaded area" value={worst ? `≈ ${worst.discom}` : '–'} sub={worst ? `≈ ${worst.utilization_pct.toFixed(1)}% of assumed area capacity` : '–'} tone={worst?.status === 'critical' ? 'critical' : worst?.status === 'warning' ? 'warning' : 'default'} badge={allocBadge} className={ALLOC_PANEL} />
+            <KpiTile label="Areas at warning+" value={`≈ ${view.rows.filter((r) => r.status !== 'ok').length}`} unit={`of ${view.rows.length}`} sub="by allocated utilisation" badge={allocBadge} className={ALLOC_PANEL} />
+            <KpiTile label="Basis" value={hourIdx == null ? (d.basis === 'forecast_peak' ? 'Forecast peak hour' : d.basis) : 'Selected hour'} sub={d.forecast_method === 'ml_model' ? 'model forecast, then allocated' : 'heuristic forecast, then allocated'} />
           </div>
 
           <Panel
@@ -62,16 +71,15 @@ export default function Areas() {
           </Panel>
 
           <div className="grid gap-4 xl:grid-cols-5">
-            <Panel className="xl:col-span-3" title="Areas" subtitle={`Load and utilisation at ${fmtDateTime(view.ts)}`} badges={<><Badge kind="simulated" small /><Badge kind={methodKind(d.forecast_method)} small /></>}>
+            <Panel className={`xl:col-span-3 ${ALLOC_PANEL}`} title="Areas (allocated)" subtitle={`System forecast × share at ${fmtDateTime(view.ts)}. ≈ marks every allocated value.`} badges={<>{allocBadge}<Badge kind={methodKind(d.forecast_method)} small /></>}>
               <FeederTable feeders={view.rows} />
-              {shares && <p className="mt-3 text-[11px] text-ink-3">Shares: {Object.entries(shares).map(([k, v]) => `${k} ${(v * 100).toFixed(0)}%`).join(' · ')} of system demand. Capacity per area = share × grid capacity × simulated headroom factor.</p>}
             </Panel>
-            <Panel className="xl:col-span-2" title="Schematic map" subtitle="Positioned by area coordinates." badges={<Badge kind="simulated" small />}>
+            <Panel className={`xl:col-span-2 ${ALLOC_PANEL}`} title="Schematic map (allocated)" subtitle="Positioned by area coordinates. Circle size is allocated load, not measured." badges={allocBadge}>
               <AreaMap feeders={view.rows} />
             </Panel>
           </div>
 
-          <Panel title="Utilisation by area and hour" subtitle="Next 24 hours. Brighter = higher share of area capacity; rings mark warning and critical thresholds." badges={<Badge kind="simulated" small />}>
+          <Panel className={ALLOC_PANEL} title="Allocated utilisation by area and hour" subtitle="Next 24 hours of the system forecast, split by share. Brighter = higher share of assumed area capacity; rings mark warning and critical thresholds." badges={allocBadge}>
             <FeederHeatmap feeders={d.feeders} hourly={d.hourly} />
           </Panel>
         </>

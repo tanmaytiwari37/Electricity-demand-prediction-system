@@ -74,6 +74,13 @@ class DataStore:
     def load(self) -> None:
         now = now_ist()
         self._load_history(now)
+        observed_peak = float(self.history["demand_mw"].max())
+        if observed_peak > settings.capacity_mw:
+            log.warning(
+                "Observed peak %.0f MW exceeds the grid-capacity assumption %.0f MW; "
+                "raise PEAKWATCH_CAPACITY_MW or the record day will read as a breach",
+                observed_peak, settings.capacity_mw,
+            )
         self._load_weather(now)
         self._load_model()
         self.loaded_at = now.isoformat()

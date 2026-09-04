@@ -4,6 +4,8 @@ import re
 
 import pytest
 
+from backend.config import settings
+
 ISO_IST = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\+05:30$")
 
 
@@ -40,7 +42,7 @@ def test_status_reports_demo_mode(client):
     assert body["demo_mode"] is True
     assert body["history"]["label"] == "SIMULATED DEMO"
     assert body["weather"]["source"] == "demo"
-    assert body["assumptions"]["grid_capacity_mw"] == 8500.0
+    assert body["assumptions"]["grid_capacity_mw"] == settings.capacity_mw
 
 
 def test_cors_preflight(client):
@@ -57,7 +59,7 @@ def test_forecast_contract(client, horizon):
     body = client.get(f"/api/forecast?horizon={horizon}").json()
     assert body["horizon_hours"] == horizon
     assert body["data_source"] == "demo"
-    assert body["grid_capacity_mw"] == 8500.0
+    assert body["grid_capacity_mw"] == settings.capacity_mw
     assert body["generated_at"] == "2026-09-04T10:00:00+05:30"
     assert len(body["points"]) == horizon
     p = body["points"][0]
@@ -85,10 +87,10 @@ def test_actual_contract(client):
 
 def test_alerts_contract_and_risk_levels(client):
     body = client.get("/api/alerts").json()
-    assert body["grid_capacity_mw"] == 8500.0
+    assert body["grid_capacity_mw"] == settings.capacity_mw
     assert body["risk_level"] in {"low", "medium", "high", "critical"}
     assert isinstance(body["alerts"], list)
-    assert body["headroom_mw"] == round(8500.0 - body["peak_mw"], 1)
+    assert body["headroom_mw"] == round(settings.capacity_mw - body["peak_mw"], 1)
     _walk(body)
 
 

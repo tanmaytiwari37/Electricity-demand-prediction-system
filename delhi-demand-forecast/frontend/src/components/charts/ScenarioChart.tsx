@@ -39,7 +39,7 @@ export default function ScenarioChart({ points, capacityMw, height = 300 }: { po
         {hasSolar && <Area type="monotone" dataKey="solar_gen_mw" name="Rooftop solar (MW)" stroke={C.solar} strokeWidth={1.5} fill={C.solar} fillOpacity={0.12} dot={false} isAnimationActive={false} legendType="rect" />}
         <Line type="monotone" dataKey="baseline_mw" name="Baseline forecast" stroke={C.forecast} strokeWidth={2} dot={false} isAnimationActive={false} />
         <Line type="monotone" dataKey="scenario_mw" name="Scenario" stroke={C.scenario} strokeWidth={2} dot={false} isAnimationActive={false} />
-        <ReferenceLine y={capacityMw} stroke={C.critical} strokeDasharray="6 4" label={{ value: `Capacity ${fmtInt(capacityMw)} MW`, position: 'insideTopRight', fill: C.critical, fontSize: 11 }} />
+        <ReferenceLine y={capacityMw} stroke={C.critical} strokeDasharray="6 4" label={{ value: `Planning capacity ${fmtInt(capacityMw)} MW`, position: 'insideTopRight', fill: C.critical, fontSize: 11 }} />
       </ComposedChart>
     </ResponsiveContainer>
   )

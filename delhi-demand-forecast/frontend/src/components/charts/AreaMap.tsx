@@ -5,7 +5,8 @@ import { C } from './theme.ts'
 const STATUS_COLOR = { ok: C.good, warning: C.warning, critical: C.critical }
 
 /** Lightweight schematic: DISCOM areas positioned by lat/lon, circle area
- *  proportional to predicted MW, colour + ring by status. Not a GIS map. */
+ *  proportional to ALLOCATED MW (system forecast × share), colour + ring by
+ *  status. Not a GIS map and not a measurement. */
 export default function AreaMap({ feeders, height = 300 }: { feeders: Feeder[]; height?: number }) {
   const w = 480, h = height
   const lats = feeders.map((f) => f.lat), lons = feeders.map((f) => f.lon)
@@ -18,7 +19,7 @@ export default function AreaMap({ feeders, height = 300 }: { feeders: Feeder[]; 
 
   return (
     <div className="relative">
-      <svg viewBox={`0 0 ${w} ${h}`} className="w-full" role="img" aria-label="Schematic map of DISCOM areas">
+      <svg viewBox={`0 0 ${w} ${h}`} className="w-full" role="img" aria-label="Schematic map of DISCOM areas showing allocated, not measured, load">
         <defs>
           <pattern id="gridp" width="24" height="24" patternUnits="userSpaceOnUse">
             <path d="M24 0H0V24" fill="none" stroke={C.grid} strokeWidth="0.6" />
@@ -31,12 +32,12 @@ export default function AreaMap({ feeders, height = 300 }: { feeders: Feeder[]; 
             <circle cx={x(f.lon)} cy={y(f.lat)} r={r(f.predicted_mw)} fill={STATUS_COLOR[f.status]} fillOpacity={0.18} stroke={STATUS_COLOR[f.status]} strokeWidth={f.status === 'ok' ? 1.5 : 3} />
             <circle cx={x(f.lon)} cy={y(f.lat)} r={4} fill={STATUS_COLOR[f.status]} stroke={C.surface} strokeWidth={1.5} />
             <text x={x(f.lon)} y={y(f.lat) + r(f.predicted_mw) + 14} textAnchor="middle" fill={C.ink} fontSize="11" fontWeight="600">{f.discom}</text>
-            <text x={x(f.lon)} y={y(f.lat) + r(f.predicted_mw) + 27} textAnchor="middle" fill={C.ink2} fontSize="10" className="num">{fmtMW(f.predicted_mw)} · {fmtPct(f.utilization_pct, 0)}</text>
-            <title>{`${f.name}: ${fmtMW(f.predicted_mw)} of ${fmtMW(f.capacity_mw)} (${fmtPct(f.utilization_pct)}) – ${f.status}`}</title>
+            <text x={x(f.lon)} y={y(f.lat) + r(f.predicted_mw) + 27} textAnchor="middle" fill={C.ink2} fontSize="10" fontStyle="italic" className="num">≈ {fmtMW(f.predicted_mw)} · ≈ {fmtPct(f.utilization_pct, 0)}</text>
+            <title>{`${f.name}: allocated ≈ ${fmtMW(f.predicted_mw)} of assumed ${fmtMW(f.capacity_mw)} (≈ ${fmtPct(f.utilization_pct)}) – ${f.status}. Not measured.`}</title>
           </g>
         ))}
       </svg>
-      <p className="mt-1 text-[11px] text-ink-3">Schematic layout from area coordinates. Circle area ∝ predicted load; ring colour = status. Not a GIS map.</p>
+      <p className="mt-1 text-[11px] text-ink-3">Schematic layout from area coordinates. Circle area ∝ allocated load (system forecast × share); ring colour = status. Not a GIS map, not a measurement.</p>
     </div>
   )
 }

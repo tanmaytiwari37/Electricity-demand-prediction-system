@@ -93,7 +93,7 @@ export default function ForecastChart({ forecast, actual = [], capacityMw, peakT
             <Area type="monotone" dataKey="band" name="P10–P90 band" stroke="none" fill={C.forecast} fillOpacity={0.12} connectNulls={false} isAnimationActive={false} legendType="rect" />
             <Line type="monotone" dataKey="actual" name="Actual" stroke={C.actual} strokeWidth={2} dot={false} connectNulls={false} isAnimationActive={false} />
             <Line type="monotone" dataKey="predicted" name="Forecast" stroke={C.forecast} strokeWidth={2} dot={false} connectNulls={false} isAnimationActive={false} />
-            <ReferenceLine y={capacityMw} stroke={C.critical} strokeDasharray="6 4" label={{ value: `Capacity ${fmtInt(capacityMw)} MW`, position: 'insideTopRight', fill: C.critical, fontSize: 11 }} />
+            <ReferenceLine y={capacityMw} stroke={C.critical} strokeDasharray="6 4" label={{ value: `Planning capacity ${fmtInt(capacityMw)} MW`, position: 'insideTopRight', fill: C.critical, fontSize: 11 }} />
             {nowTs && <ReferenceLine x={nowTs} stroke={C.axis} label={{ value: 'now', position: 'insideTopLeft', fill: C.tick, fontSize: 10 }} />}
             {peak && (
               <ReferenceDot x={peak.ts} y={peak.predicted_mw} r={6} fill={C.forecast} stroke={C.surface} strokeWidth={2}

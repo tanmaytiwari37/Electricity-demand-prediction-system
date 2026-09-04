@@ -10,23 +10,36 @@ from __future__ import annotations
 
 import pandas as pd
 
-from backend.config import RISK_THRESHOLDS_PCT, settings
+from backend.config import DISCOM_SHARE, RISK_THRESHOLDS_PCT, settings
 from backend.services.data_store import store
 from backend.services.forecast_service import forecast_frame, peak_of
 from backend.utils.time import iso, mw
 
 LEVEL_ORDER = ["low", "medium", "high", "critical"]
 
+
+def _share_order(top: int = 3) -> str:
+    """DISCOMs by configured expected load share, e.g. 'BRPL ~40%, TPDDL ~33%, BYPL ~20%'.
+
+    Our load data is system-wide only, so an action may rank DISCOMs by the share of
+    load they are expected to carry but must never assert that a feeder is constrained.
+    """
+    ranked = sorted(DISCOM_SHARE.items(), key=lambda kv: kv[1], reverse=True)[:top]
+    return ", ".join(f"{d} ~{s * 100:.0f}%" for d, s in ranked)
+
+
 ACTIONS = {
     "critical": (
         "Peak within {gap:.0f}% of grid capacity",
         "Activate demand-response contracts, confirm spinning reserve and inter-state "
-        "drawal schedule; brief BRPL and BYPL control rooms on load-shedding priority lists.",
+        "drawal schedule; brief all DISCOM control rooms, prioritising by expected load share "
+        f"({_share_order()}). Feeder-level constraints cannot be identified from system-level data.",
     ),
     "high": (
         "Peak approaching grid capacity",
-        "Pre-position spinning reserve, verify transformer headroom on high-utilisation "
-        "feeders and issue an advisory to large industrial consumers.",
+        "Pre-position spinning reserve; ask DISCOMs to verify transformer headroom in their own "
+        f"networks, starting with the largest expected load shares ({_share_order()}); issue an "
+        "advisory to large industrial consumers.",
     ),
     "medium": (
         "Elevated demand expected",

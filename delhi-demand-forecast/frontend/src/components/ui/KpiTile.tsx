@@ -7,6 +7,7 @@ interface Props {
   sub?: ReactNode
   tone?: 'default' | 'good' | 'warning' | 'serious' | 'critical' | 'accent'
   badge?: ReactNode
+  className?: string
 }
 
 const TONE: Record<NonNullable<Props['tone']>, string> = {
@@ -19,9 +20,9 @@ const TONE: Record<NonNullable<Props['tone']>, string> = {
 }
 
 /** A stat tile: the number is the chart. */
-export default function KpiTile({ label, value, unit, sub, tone = 'default', badge }: Props) {
+export default function KpiTile({ label, value, unit, sub, tone = 'default', badge, className = '' }: Props) {
   return (
-    <div className="flex min-w-0 flex-col justify-between rounded-lg border border-line bg-surface-1 px-4 py-3">
+    <div className={`flex min-w-0 flex-col justify-between rounded-lg border border-line bg-surface-1 px-4 py-3 ${className}`}>
       <div className="flex items-center justify-between gap-2">
         <span className="text-[11px] font-semibold uppercase tracking-wider text-ink-3">{label}</span>
         {badge}

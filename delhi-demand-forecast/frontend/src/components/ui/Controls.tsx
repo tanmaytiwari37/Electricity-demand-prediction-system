@@ -44,7 +44,7 @@ export function CapacityInput({ compact }: { compact?: boolean }) {
         onBlur={commit}
         onKeyDown={(e) => e.key === 'Enter' && commit()}
         className="num w-24 rounded border border-line-strong bg-surface-2 px-2 py-1 text-right text-xs font-semibold text-ink outline-none focus:border-series-blue"
-        aria-label="Grid capacity assumption in MW"
+        aria-label="Grid capacity planning assumption in MW (configurable, not a measured limit)"
       />
       <span>MW</span>
       {capacityMw !== defaultCapacityMw && (

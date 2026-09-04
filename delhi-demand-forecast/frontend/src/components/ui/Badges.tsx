@@ -13,6 +13,7 @@ export type ProvenanceKind =
   | 'demo_weather'
   | 'analog_weather'
   | 'simulated'
+  | 'allocated'
   | 'assumption'
   | 'backtest'
   | 'rules'
@@ -27,7 +28,8 @@ const STYLES: Record<ProvenanceKind, { label: string; cls: string; title: string
   demo_weather: { label: 'SIMULATED WEATHER', cls: 'border-warning/50 bg-warning/10 text-warning', title: 'Synthetic weather forecast (demo mode, Open-Meteo unavailable).' },
   analog_weather: { label: 'HISTORICAL ANALOG WEATHER', cls: 'border-warning/50 bg-warning/10 text-warning', title: 'Weather from the same hours 52 weeks earlier, because the dataset does not end today.' },
   simulated: { label: 'SIMULATED SPLIT', cls: 'border-warning/50 bg-warning/10 text-warning', title: 'System demand split by configured DISCOM share. Real feeder telemetry is not public.' },
-  assumption: { label: 'ASSUMPTION', cls: 'border-series-violet/50 bg-series-violet/10 text-series-violet', title: 'Editable demo parameter, not an official figure.' },
+  allocated: { label: '≈ PROPORTIONAL ALLOCATION', cls: 'border-dashed border-series-magenta/70 bg-series-magenta/10 text-series-magenta', title: 'Not measured. The system-level forecast split by configured DISCOM share ratios (approximations of publicly reported DISCOM peak demands). Our data contains no feeder or DISCOM telemetry.' },
+  assumption: { label: 'ASSUMPTION', cls: 'border-series-violet/50 bg-series-violet/10 text-series-violet', title: 'Configurable planning assumption, not a measured or official limit.' },
   backtest: { label: '1-H BACKTEST', cls: 'border-series-blue/50 bg-series-blue/10 text-series-blue', title: 'What the model would have predicted one hour ahead using true history. More optimistic than a real multi-hour forecast.' },
   rules: { label: 'RULE-BASED ADVICE', cls: 'border-ink-3/50 bg-surface-2 text-ink-2', title: 'System-generated recommendation. Not an operational instruction.' },
 }
