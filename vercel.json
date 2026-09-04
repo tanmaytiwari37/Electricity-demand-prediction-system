@@ -1,8 +1,9 @@
 {
-  "buildCommand": "npm run build --prefix delhi-demand-forecast/frontend",
-  "outputDirectory": "delhi-demand-forecast/frontend/dist",
-  "installCommand": "npm install --prefix delhi-demand-forecast/frontend",
+  "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "vite",
+  "installCommand": "cd delhi-demand-forecast/frontend && npm install",
+  "buildCommand": "cd delhi-demand-forecast/frontend && npm run build",
+  "outputDirectory": "delhi-demand-forecast/frontend/dist",
   "rewrites": [
     { "source": "/(.*)", "destination": "/index.html" }
   ]
