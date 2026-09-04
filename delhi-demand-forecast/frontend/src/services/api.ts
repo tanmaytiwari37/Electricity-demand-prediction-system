@@ -15,7 +15,11 @@ import type {
   WhatIfResponse,
 } from '../types/api.ts'
 
-export const API_BASE = (import.meta.env.VITE_API_URL as string | undefined)?.replace(/\/$/, '') ?? ''
+/** Production: VITE_API_BASE (e.g. https://peakwatch-api.onrender.com). Local dev: leave it
+ *  unset and the Vite proxy forwards /api to http://localhost:8000. VITE_API_URL is
+ *  accepted as a legacy alias. */
+const env = import.meta.env as Record<string, string | undefined>
+export const API_BASE = (env.VITE_API_BASE || env.VITE_API_URL || '').replace(/\/$/, '')
 
 const http = axios.create({
   baseURL: `${API_BASE}/api`,
@@ -43,7 +47,8 @@ function toApiError(err: unknown): ApiError {
     const msg = typeof detail === 'string' ? detail : Array.isArray(detail) ? 'Invalid request parameters.' : `API error ${e.response.status}`
     return new ApiError(msg, 'http', e.response.status)
   }
-  return new ApiError('Cannot reach the API. Is the backend running on port 8000?', 'network', null)
+  const where = API_BASE ? `at ${API_BASE}` : 'through the local proxy (is the backend running on port 8000?)'
+  return new ApiError(`Cannot reach the API ${where}. A free-tier backend can take up to a minute to wake up; retry shortly.`, 'network', null)
 }
 
 async function get<T>(path: string, params?: Record<string, unknown>, signal?: AbortSignal): Promise<T> {

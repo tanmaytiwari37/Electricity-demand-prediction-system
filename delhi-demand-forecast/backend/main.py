@@ -30,10 +30,12 @@ Architecture
   response carries ``data_source`` and, where relevant, ``forecast_method``
   so the UI can label provenance honestly.
 
-Run:  uvicorn backend.main:app --reload
+Run:  uvicorn backend.main:app --reload            (local, port 8000)
+      python -m backend.main                       (reads PORT, default 8000; used by Render)
 """
 
 import logging
+import os
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -84,3 +86,10 @@ for router in (
 @app.get("/", include_in_schema=False)
 def root():
     return {"name": "PeakWatch Delhi API", "version": APP_VERSION, "docs": "/docs"}
+
+
+if __name__ == "__main__":
+    import uvicorn
+
+    # Hosting platforms (Render) inject PORT; locally it defaults to 8000.
+    uvicorn.run("backend.main:app", host="0.0.0.0", port=int(os.environ.get("PORT", "8000")))

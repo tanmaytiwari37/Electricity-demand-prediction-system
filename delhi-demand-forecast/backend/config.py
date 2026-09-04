@@ -102,8 +102,10 @@ class Settings(BaseSettings):
 
     capacity_mw: float = GRID_CAPACITY_MW
     data_dir: Path = PROJECT_ROOT / "data"
-    # Cleaned real dataset (timestamp, demand_mw, weather...). If absent -> DEMO MODE.
-    history_csv: Path | None = None
+    # Cleaned real dataset (timestamp, demand_mw, weather...). Defaults to the committed
+    # processed CSV so a fresh clone (no .env) serves REAL data; if the file is absent
+    # or unreadable the app falls back to DEMO MODE and says so.
+    history_csv: Path | None = PROJECT_ROOT / "data" / "processed" / "delhi_history.csv"
     # Trained-on-real-data artifact. If absent -> demo artifact / heuristic.
     model_path: Path = PROJECT_ROOT / "ml" / "models" / "model.joblib"
     demo_model_path: Path = PROJECT_ROOT / "ml" / "models" / "demo_model.joblib"
@@ -115,11 +117,17 @@ class Settings(BaseSettings):
     # ISO timestamp to freeze "now" (deterministic demos / tests). Empty -> wall clock.
     fixed_now: str | None = None
     cors_origins: str = "http://localhost:5173,http://127.0.0.1:5173"
+    # Deployed frontend origin (e.g. https://peakwatch.vercel.app), added to the list above.
+    frontend_origin: str | None = None
     max_horizon_hours: int = 168
 
     @property
     def cors_origin_list(self) -> list[str]:
-        return [o.strip() for o in self.cors_origins.split(",") if o.strip()]
+        origins = [o.strip() for o in self.cors_origins.split(",") if o.strip()]
+        extra = (self.frontend_origin or "").strip().rstrip("/")
+        if extra and extra not in origins:
+            origins.append(extra)
+        return origins
 
 
 settings = Settings()
