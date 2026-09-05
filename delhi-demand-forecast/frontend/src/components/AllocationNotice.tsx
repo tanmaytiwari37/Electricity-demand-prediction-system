@@ -13,7 +13,7 @@ export default function AllocationNotice({ shares, compact = false }: { shares?:
   }
 
   return (
-    <details className="group rounded-md border border-line bg-surface-1 px-5 py-3 text-[12px] text-ink-2">
+    <details className="card group rounded-lg border border-line bg-surface-1/90 px-5 py-3 text-[12px] text-ink-2">
       <summary className="flex cursor-pointer list-none items-center gap-3">
         <span className="shrink-0 rounded-sm border border-warning/40 px-1.5 py-0.5 text-[9.5px] font-bold tracking-[0.1em] text-warning">SIMULATED FEEDER DATA</span>
         <span className="truncate">Every area figure is the system forecast split by DISCOM share. None of it is measured.</span>

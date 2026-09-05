@@ -3,9 +3,9 @@ import { useAppState } from '../../hooks/useAppState.tsx'
 type Light = 'good' | 'warning' | 'critical' | 'idle'
 
 const DOT: Record<Light, string> = {
-  good: 'bg-good',
-  warning: 'bg-warning',
-  critical: 'bg-critical',
+  good: 'bg-good dot-good',
+  warning: 'bg-warning dot-warning',
+  critical: 'bg-critical dot-critical',
   idle: 'bg-ink-3',
 }
 

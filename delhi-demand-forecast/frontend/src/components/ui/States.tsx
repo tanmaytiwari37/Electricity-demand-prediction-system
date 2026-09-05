@@ -14,7 +14,7 @@ export function Loading({ lines = 3, height = 'h-40' }: { lines?: number; height
 
 export function ErrorState({ error, onRetry, compact }: { error: ApiError | Error; onRetry?: () => void; compact?: boolean }) {
   return (
-    <div className={`rounded-[6px] border border-critical/40 bg-critical/5 ${compact ? 'p-3' : 'p-4'}`} role="alert">
+    <div className={`rounded-[6px] border border-critical/45 bg-critical/12 ${compact ? 'p-3' : 'p-4'}`} role="alert">
       <p className="flex items-center gap-2 text-xs font-semibold text-critical"><span aria-hidden>■</span> Could not load data</p>
       <p className="mt-1 text-[11px] leading-relaxed text-ink-2">{error.message}</p>
       {onRetry && (

@@ -1,9 +1,11 @@
 import { useMemo, useState } from 'react'
 import AllocationNotice from '../components/AllocationNotice.tsx'
 import AreaMap from '../components/charts/AreaMap.tsx'
+import DelhiMap from '../components/charts/DelhiMap.tsx'
 import FeederHeatmap from '../components/charts/FeederHeatmap.tsx'
 import FeederTable from '../components/FeederTable.tsx'
 import Button from '../components/ui/Button.tsx'
+import { Segmented } from '../components/ui/Controls.tsx'
 import KpiTile, { StatStrip } from '../components/ui/KpiTile.tsx'
 import Panel, { PageHeader } from '../components/ui/Panel.tsx'
 import { SourceLine, methodKind } from '../components/ui/Badges.tsx'
@@ -17,6 +19,7 @@ import { fmtDateTime, fmtDayHour, fmtInt } from '../utils/format.ts'
 export default function Areas() {
   const { capacityMw, version, status } = useAppState()
   const [hourIdx, setHourIdx] = useState<number | null>(null)
+  const [mapView, setMapView] = useState<'map' | 'schematic'>('map')
   const feeders = useApi((s) => api.feeders({ horizon: 24, capacityMw }, s), [capacityMw, version])
   const d = feeders.data
 
@@ -57,8 +60,8 @@ export default function Areas() {
             <KpiTile flat label="Evaluated at" value={hourIdx == null ? 'Peak hour' : fmtDayHour(view.ts).split(' ').slice(-1)[0]} sub={hourIdx == null ? fmtDayHour(d.as_of) : 'selected hour'} />
           </StatStrip>
 
-          <div className="grid gap-5 xl:grid-cols-5">
-            <Panel className="xl:col-span-3" title="Areas" subtitle={`At ${fmtDateTime(view.ts)} · click a column to sort`} actions={hourIdx != null && <Button size="sm" onClick={() => setHourIdx(null)}>Back to peak hour</Button>}>
+          <div className="grid gap-5 xl:grid-cols-2">
+            <Panel title="Areas" subtitle={`At ${fmtDateTime(view.ts)} · click a column to sort`} actions={hourIdx != null && <Button size="sm" onClick={() => setHourIdx(null)}>Back to peak hour</Button>}>
               <div className="mb-4 flex items-center gap-4 border-b border-line pb-4">
                 <span className="label shrink-0">Hour</span>
                 <input type="range" min={0} max={d.hourly.length - 1} value={hourIdx ?? peakIdx} onChange={(e) => setHourIdx(Number(e.target.value))} aria-label="Hour of forecast horizon" />
@@ -66,8 +69,12 @@ export default function Areas() {
               </div>
               <FeederTable feeders={view.rows} />
             </Panel>
-            <Panel className="xl:col-span-2" title="Schematic map" subtitle="Circle size is allocated load. Not a GIS map.">
-              <AreaMap feeders={view.rows} />
+            <Panel
+              title={mapView === 'map' ? 'Delhi area map' : 'Schematic map'}
+              subtitle={mapView === 'map' ? 'OpenStreetMap basemap. Fill is allocated utilisation; DISCOM edges are approximate.' : 'Circle size is allocated load. Not a GIS map.'}
+              actions={<Segmented size="sm" value={mapView} options={['map', 'schematic']} onChange={setMapView} labelOf={(v) => (v === 'map' ? 'Map' : 'Schematic')} />}
+            >
+              {mapView === 'map' ? <DelhiMap feeders={view.rows} /> : <AreaMap feeders={view.rows} />}
             </Panel>
           </div>
 

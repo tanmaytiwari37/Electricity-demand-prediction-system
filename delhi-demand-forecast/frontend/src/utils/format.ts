@@ -55,10 +55,10 @@ export interface ToneMeta {
 /** Status colour is muted and never used alone: every level carries a word
  *  and a glyph. LOW is neutral grey-green so a calm grid stays calm. */
 export const riskMeta: Record<RiskLevel, ToneMeta> = {
-  low: { label: 'LOW', text: 'text-good', bg: 'bg-good/8', border: 'border-good/35', dot: 'bg-good', icon: '●' },
-  medium: { label: 'MEDIUM', text: 'text-warning', bg: 'bg-warning/8', border: 'border-warning/35', dot: 'bg-warning', icon: '▲' },
-  high: { label: 'HIGH', text: 'text-serious', bg: 'bg-serious/8', border: 'border-serious/35', dot: 'bg-serious', icon: '▲' },
-  critical: { label: 'CRITICAL', text: 'text-critical', bg: 'bg-critical/8', border: 'border-critical/35', dot: 'bg-critical', icon: '■' },
+  low: { label: 'LOW', text: 'text-good', bg: 'bg-good/14', border: 'border-good/45', dot: 'bg-good', icon: '●' },
+  medium: { label: 'MEDIUM', text: 'text-warning', bg: 'bg-warning/14', border: 'border-warning/45', dot: 'bg-warning', icon: '▲' },
+  high: { label: 'HIGH', text: 'text-serious', bg: 'bg-serious/14', border: 'border-serious/45', dot: 'bg-serious', icon: '▲' },
+  critical: { label: 'CRITICAL', text: 'text-critical', bg: 'bg-critical/14', border: 'border-critical/45', dot: 'bg-critical', icon: '■' },
 }
 
 export const feederMeta: Record<FeederStatus, ToneMeta> = {

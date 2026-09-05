@@ -5,10 +5,10 @@ import { IconArrow } from './Icons.tsx'
 type Variant = 'primary' | 'secondary' | 'ghost'
 type Size = 'sm' | 'md' | 'lg'
 
-const BASE = 'pressable inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-[4px] font-semibold select-none disabled:cursor-not-allowed disabled:opacity-50'
+const BASE = 'pressable inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-[6px] font-semibold select-none disabled:cursor-not-allowed disabled:opacity-50'
 const VARIANT: Record<Variant, string> = {
-  primary: 'bg-ink text-surface-0 border border-ink hover:bg-white hover:-translate-y-px hover:shadow-[0_6px_16px_-8px_rgba(255,255,255,0.35)]',
-  secondary: 'bg-surface-2 text-ink border border-line-strong hover:border-ink-3 hover:bg-surface-3 hover:-translate-y-px',
+  primary: 'bg-series-blue text-white border border-series-blue hover:bg-[#4a90e8] hover:border-[#4a90e8] hover:-translate-y-px hover:shadow-[0_12px_24px_-10px_rgba(57,135,229,0.75)]',
+  secondary: 'bg-surface-2 text-ink border border-line-strong hover:border-ink-3 hover:bg-surface-3 hover:-translate-y-px hover:shadow-[0_8px_18px_-10px_rgba(0,0,0,0.7)]',
   ghost: 'bg-transparent text-ink-2 border border-transparent hover:text-ink hover:bg-surface-2',
 }
 const SIZE: Record<Size, string> = {

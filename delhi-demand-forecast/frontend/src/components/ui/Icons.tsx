@@ -62,10 +62,16 @@ export const IconDroplet = (p: P) => (
 export function Logo({ size = 28 }: { size?: number }) {
   return (
     <svg viewBox="0 0 32 32" width={size} height={size} aria-hidden>
-      <rect x="0.5" y="0.5" width="31" height="31" rx="6" fill="#111113" stroke="#2f2f35" />
-      <path d="M6 21 L11 13 L15 17 L20 8 L26 15" fill="none" stroke="#f4f4f5" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M6 25 H26" stroke="#3987e5" strokeWidth="1.8" strokeLinecap="round" />
-      <circle cx="20" cy="8" r="2.4" fill="#d64545" />
+      <defs>
+        <linearGradient id="pw-logo" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#4a90e8" />
+          <stop offset="100%" stopColor="#1c5cab" />
+        </linearGradient>
+      </defs>
+      <rect x="0.5" y="0.5" width="31" height="31" rx="8" fill="url(#pw-logo)" stroke="rgba(255,255,255,0.18)" />
+      <path d="M6 21 L11 13 L15 17 L20 8 L26 15" fill="none" stroke="#ffffff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M6 25 H26" stroke="#a6cbf7" strokeWidth="1.8" strokeLinecap="round" />
+      <circle cx="20" cy="8" r="2.4" fill="#ff6b6b" />
     </svg>
   )
 }

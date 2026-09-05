@@ -49,7 +49,7 @@ export default function AlertList({ alerts, thresholdMw, emptyHint }: Props) {
                     <div><dt className="label">Headroom</dt><dd className="mt-0.5 text-ink">{fmtPct(a.headroom_pct)}</dd></div>
                   </dl>
                 </div>
-                <div className="rounded-md border border-line bg-surface-0/40 p-4">
+                <div className="rounded-lg border border-series-blue/30 bg-series-blue/10 p-4">
                   <div className="label mb-1.5">Recommended action</div>
                   <p className="text-[12.5px] leading-relaxed text-ink">{a.recommended_action}</p>
                   <p className="mt-2 text-[11px] text-ink-3">{a.advisory} Rule-based decision support, not an operational instruction.</p>

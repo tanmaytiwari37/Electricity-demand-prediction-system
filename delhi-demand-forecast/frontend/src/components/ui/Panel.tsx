@@ -12,16 +12,16 @@ interface Props {
 }
 
 const VARIANT = {
-  default: 'border border-line bg-surface-1',
-  plain: 'border border-line bg-transparent',
-  raised: 'border border-line-strong bg-surface-2',
+  default: 'card border border-line bg-surface-1/90',
+  plain: 'border border-line bg-surface-1/50',
+  raised: 'card border border-line-strong bg-surface-2',
 }
 
 /** A panel is a title, an optional one-line subtitle, and content. Nothing
  *  else lives in the header except a single action. */
 export default function Panel({ title, subtitle, badges, actions, children, className = '', bodyClassName = '', variant = 'default' }: Props) {
   return (
-    <section className={`flex min-w-0 flex-col rounded-md ${VARIANT[variant]} ${className}`}>
+    <section className={`flex min-w-0 flex-col rounded-lg ${VARIANT[variant]} ${className}`}>
       {(title || actions || badges) && (
         <header className="flex items-center justify-between gap-3 px-5 pt-4 pb-1">
           <div className="min-w-0">
@@ -44,7 +44,7 @@ export function PageHeader({ title, subtitle, sources, children }: { title: Reac
   return (
     <div className="flex flex-wrap items-end justify-between gap-4">
       <div className="min-w-0">
-        <h1 className="text-[22px] font-bold tracking-[-0.02em] text-ink">{title}</h1>
+        <h1 className="font-display text-[22px] font-bold tracking-[-0.02em] text-ink">{title}</h1>
         {subtitle && <p className="mt-1 max-w-2xl text-[13px] text-ink-2">{subtitle}</p>}
         {sources && <div className="mt-2">{sources}</div>}
       </div>

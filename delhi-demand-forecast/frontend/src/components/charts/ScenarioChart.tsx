@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import { Area, CartesianGrid, ComposedChart, Legend, Line, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import type { WhatIfPoint } from '../../types/api.ts'
 import { fmtDateTime, fmtInt, fmtMW, fmtSigned, fmtTick } from '../../utils/format.ts'
-import { C, axisLine, legendStyle, niceDomain, tickStyle } from './theme.ts'
+import { C, axisLine, legendStyle, legendText, niceDomain, tickStyle } from './theme.ts'
 import { TooltipBox, hoveredRow, type TipProps } from './ChartTooltip.tsx'
 
 export default function ScenarioChart({ points, capacityMw, height = 300 }: { points: WhatIfPoint[]; capacityMw: number; height?: number }) {
@@ -34,7 +34,7 @@ export default function ScenarioChart({ points, capacityMw, height = 300 }: { po
             )
           }}
         />
-        <Legend verticalAlign="top" align="right" height={26} iconType="plainline" iconSize={14} wrapperStyle={legendStyle} />
+        <Legend verticalAlign="top" align="right" height={26} iconType="plainline" iconSize={14} wrapperStyle={legendStyle} formatter={legendText} />
         <Line type="monotone" dataKey="baseline_mw" name="Baseline forecast" stroke={C.forecast} strokeWidth={2} dot={false} isAnimationActive={false} />
         <Line type="monotone" dataKey="scenario_mw" name="Scenario" stroke={C.scenario} strokeWidth={2} dot={false} isAnimationActive={false} />
         <ReferenceLine y={capacityMw} stroke={C.critical} strokeOpacity={0.8} strokeDasharray="6 4" label={{ value: `Grid capacity ${fmtInt(capacityMw)} MW`, position: 'insideTopRight', fill: C.critical, fontSize: 10.5 }} />

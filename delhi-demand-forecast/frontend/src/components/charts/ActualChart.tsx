@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import { CartesianGrid, ComposedChart, Legend, Line, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import type { ActualPoint } from '../../types/api.ts'
 import { fmtDateTime, fmtInt, fmtMW, fmtSigned, fmtTick } from '../../utils/format.ts'
-import { C, axisLine, legendStyle, niceDomain, tickStyle } from './theme.ts'
+import { C, axisLine, legendStyle, legendText, niceDomain, tickStyle } from './theme.ts'
 import { TooltipBox, hoveredRow, type TipProps } from './ChartTooltip.tsx'
 
 export default function ActualChart({ points, height = 240 }: { points: ActualPoint[]; height?: number }) {
@@ -38,7 +38,7 @@ export default function ActualChart({ points, height = 240 }: { points: ActualPo
               )
             }}
           />
-          <Legend verticalAlign="top" align="right" height={26} iconType="plainline" iconSize={14} wrapperStyle={legendStyle} />
+          <Legend verticalAlign="top" align="right" height={26} iconType="plainline" iconSize={14} wrapperStyle={legendStyle} formatter={legendText} />
           <Line type="monotone" dataKey="actual_mw" name="Actual" stroke={C.actual} strokeWidth={2} dot={false} isAnimationActive={false} />
           <Line type="monotone" dataKey="predicted_mw" name="Predicted (1 h ahead)" stroke={C.forecast} strokeWidth={2} strokeDasharray="5 3" dot={false} isAnimationActive={false} connectNulls={false} />
         </ComposedChart>

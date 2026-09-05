@@ -1,4 +1,5 @@
 import ForecastChart from '../components/charts/ForecastChart.tsx'
+import { C } from '../components/charts/theme.ts'
 import { LinkButton } from '../components/ui/Button.tsx'
 import { IconAlerts, IconAreas, IconForecast, IconModel, IconScenario, IconWeather } from '../components/ui/Icons.tsx'
 import NavModule from '../components/ui/NavModule.tsx'
@@ -39,7 +40,7 @@ export default function Overview() {
 
       {/* Row 1: the headline */}
       <div className="grid gap-5 xl:grid-cols-3">
-        <div className="flex flex-col justify-between gap-8 rounded-md border border-line bg-surface-1 p-6 xl:col-span-2">
+        <div className="card flex flex-col justify-between gap-8 rounded-lg border border-line bg-surface-1/90 p-6 xl:col-span-2">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
               <div className="label">Delhi system demand · now</div>
@@ -125,7 +126,7 @@ export default function Overview() {
   )
 }
 
-/** Hour-by-hour forecast bars for the next 24 h; the peak hour is white. */
+/** Hour-by-hour forecast bars for the next 24 h; the peak hour is drawn in bright ink. */
 function HourStrip({ points, peakTs, capacityMw }: { points: ForecastPoint[]; peakTs: string; capacityMw: number }) {
   const pts = points.slice(0, 24)
   if (!pts.length) return null
@@ -143,16 +144,16 @@ function HourStrip({ points, peakTs, capacityMw }: { points: ForecastPoint[]; pe
     <div>
       <div className="mb-2 flex items-baseline justify-between">
         <span className="label">Next 24 hours</span>
-        <span className="text-[11px] text-ink-3">white bar = peak hour{capInRange ? ' · dashed = grid capacity' : ` · grid capacity ${fmtInt(capacityMw)} MW is above this range`}</span>
+        <span className="text-[11px] text-ink-3">bright bar = peak hour{capInRange ? ' · dashed = grid capacity' : ` · grid capacity ${fmtInt(capacityMw)} MW is above this range`}</span>
       </div>
       <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="h-24 w-full" role="img" aria-label="Hourly forecast for the next 24 hours">
-        {capInRange && <line x1="0" x2="100" y1={y(capacityMw)} y2={y(capacityMw)} stroke="#d64545" strokeOpacity="0.7" strokeWidth="0.4" strokeDasharray="1.5 1" vectorEffect="non-scaling-stroke" />}
+        {capInRange && <line x1="0" x2="100" y1={y(capacityMw)} y2={y(capacityMw)} stroke={C.critical} strokeOpacity="0.75" strokeWidth="0.4" strokeDasharray="1.5 1" vectorEffect="non-scaling-stroke" />}
         {pts.map((p, i) => {
           const peak = p.ts === peakTs
           return (
             <g key={p.ts}>
-              <rect x={i * w + w * 0.2} width={w * 0.6} y={y(p.upper_mw)} height={Math.max(0, y(p.lower_mw) - y(p.upper_mw))} fill="#3987e5" fillOpacity="0.14" />
-              <rect x={i * w + w * 0.2} width={w * 0.6} y={y(p.predicted_mw)} height={Math.max(0.5, 100 - y(p.predicted_mw))} fill={peak ? '#f4f4f5' : '#3987e5'} fillOpacity={peak ? 1 : 0.7} />
+              <rect x={i * w + w * 0.2} width={w * 0.6} y={y(p.upper_mw)} height={Math.max(0, y(p.lower_mw) - y(p.upper_mw))} fill={C.forecast} fillOpacity="0.16" />
+              <rect x={i * w + w * 0.2} width={w * 0.6} y={y(p.predicted_mw)} height={Math.max(0.5, 100 - y(p.predicted_mw))} fill={peak ? C.ink : C.forecast} fillOpacity={peak ? 1 : 0.8} />
               <title>{`${fmtDayHour(p.ts)} IST: ${fmtInt(p.predicted_mw)} MW (${fmtInt(p.lower_mw)}–${fmtInt(p.upper_mw)})`}</title>
             </g>
           )

@@ -34,7 +34,7 @@ const VALUE_SIZE = {
 /** A stat: label, number, one short line beneath. */
 export default function KpiTile({ label, value, unit, sub, tone = 'default', badge, size = 'md', flat, className = '' }: Props) {
   return (
-    <div className={`flex min-w-0 flex-col gap-1.5 ${flat ? 'px-5 py-4' : 'rounded-md border border-line bg-surface-1 px-5 py-4'} ${className}`}>
+    <div className={`flex min-w-0 flex-col gap-1.5 ${flat ? 'px-5 py-4' : 'card rounded-lg border border-line bg-surface-1/90 px-5 py-4'} ${className}`}>
       <div className="flex items-center justify-between gap-2">
         <span className="label truncate">{label}</span>
         {badge}
@@ -51,7 +51,7 @@ export default function KpiTile({ label, value, unit, sub, tone = 'default', bad
 /** A row of stats inside one bordered strip, separated by hairlines. */
 export function StatStrip({ children, cols = 'md:grid-cols-3 xl:grid-cols-6', className = '' }: { children: ReactNode; cols?: string; className?: string }) {
   return (
-    <div className={`grid grid-cols-2 divide-x divide-y divide-line overflow-hidden rounded-md border border-line bg-surface-1 md:divide-y-0 ${cols} ${className}`}>
+    <div className={`card grid grid-cols-2 divide-x divide-y divide-line overflow-hidden rounded-lg border border-line bg-surface-1/90 md:divide-y-0 ${cols} ${className}`}>
       {children}
     </div>
   )

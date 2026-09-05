@@ -22,7 +22,7 @@ export interface TooltipRow {
  *  uses ink tokens; the swatch carries series identity. */
 export function TooltipBox({ title, rows }: { title: ReactNode; rows: TooltipRow[] }) {
   return (
-    <div className="min-w-[180px] rounded-[4px] border border-line-strong bg-surface-2/95 px-3 py-2 text-[11px] shadow-[0_8px_24px_-8px_rgba(0,0,0,0.8)] backdrop-blur">
+    <div className="min-w-[180px] rounded-[6px] border border-line-strong bg-surface-2/95 px-3 py-2 text-[11px] shadow-[0_18px_36px_-12px_rgba(0,0,0,0.7)] backdrop-blur">
       <div className="mb-1.5 border-b border-line pb-1 font-semibold text-ink">{title}</div>
       <table className="w-full">
         <tbody>

@@ -1,15 +1,18 @@
 @import "tailwindcss";
 
-/* PEAKWATCH design tokens. Black-dominant operator UI, single (dark) look by
-   design. Colour is reserved for meaning: series identity on charts and the
-   four status states. Everything else is achieved with type, spacing and
-   hairline borders. Series colours were validated for colour-vision safety
-   against surface-1 with the dataviz palette validator. */
+/* PEAKWATCH design tokens. Black control-room UI: a near-black page with faint
+   colour orbs behind it, slightly lifted panels with a hairline top
+   highlight, and near-white ink. Colour is reserved for meaning: series
+   identity on charts and the four status states. Everything else is done
+   with type, spacing, hairline borders and depth. Series colours were
+   validated for colour-vision safety against the #111113 panel surface with
+   the dataviz palette validator (all six checks pass); every status colour
+   clears 5:1 on the panel so it can carry text. */
 @theme {
   --color-surface-0: #0a0a0b;   /* page */
   --color-surface-1: #111113;   /* panel / chart surface */
   --color-surface-2: #18181b;   /* raised / input */
-  --color-surface-3: #202024;   /* hover */
+  --color-surface-3: #202024;   /* hover / meter track */
   --color-line: #222226;
   --color-line-strong: #2f2f35;
 
@@ -23,25 +26,30 @@
   --color-series-violet: #9085e9;   /* solar */
   --color-series-magenta: #d55181;  /* temperature */
 
-  --color-good: #3a9d5d;
-  --color-warning: #d9a21b;
-  --color-serious: #e0784a;
-  --color-critical: #d64545;
+  --color-good: #2fb36a;
+  --color-warning: #e8a83a;
+  --color-serious: #ec835a;
+  --color-critical: #f05a5a;
 
-  --font-sans: "Inter", ui-sans-serif, system-ui, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-display: "Sora", "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, "Cascadia Mono", "SFMono-Regular", Menlo, Consolas, monospace;
+
+  --shadow-card: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 1px 2px rgba(0, 0, 0, 0.35), 0 14px 34px -20px rgba(0, 0, 0, 0.8);
+  --shadow-card-hover: inset 0 1px 0 rgba(255, 255, 255, 0.07), 0 2px 4px rgba(0, 0, 0, 0.4), 0 22px 46px -18px rgba(57, 135, 229, 0.38);
 }
 
-html { color-scheme: dark; }
+html { color-scheme: dark; scrollbar-color: var(--color-line-strong) transparent; }
 body {
   margin: 0;
   background: var(--color-surface-0);
   color: var(--color-ink);
   font-family: var(--font-sans);
-  font-feature-settings: "cv11", "ss01", "tnum";
+  font-feature-settings: "tnum";
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
+::selection { background: rgba(57, 135, 229, 0.38); color: var(--color-ink); }
 
 /* Numerals: tabular everywhere so columns and KPIs align. */
 .num { font-variant-numeric: tabular-nums; }
@@ -49,20 +57,35 @@ body {
 /* Section label: the small uppercase operational caption used on every panel. */
 .label {
   font-size: 10.5px;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--color-ink-3);
 }
 
-/* Focus: visible, neutral, never colour-only. */
+/* Card surface: a lifted plane with a hairline top highlight and deep shadow. */
+.card { box-shadow: var(--shadow-card); }
+.card-lift { transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease, background-color 180ms ease; }
+.card-lift:hover { transform: translateY(-2px); box-shadow: var(--shadow-card-hover); }
+
+/* Status glow: the risk word and status dots carry a soft halo in their own
+   colour so state reads from across the room. Never the only signal. */
+.glow-good { text-shadow: 0 0 28px rgba(47, 179, 106, 0.45); }
+.glow-warning { text-shadow: 0 0 28px rgba(232, 168, 58, 0.45); }
+.glow-serious { text-shadow: 0 0 28px rgba(236, 131, 90, 0.45); }
+.glow-critical { text-shadow: 0 0 28px rgba(240, 90, 90, 0.55); }
+.dot-good { box-shadow: 0 0 0 3px rgba(47, 179, 106, 0.18), 0 0 10px rgba(47, 179, 106, 0.7); }
+.dot-warning { box-shadow: 0 0 0 3px rgba(232, 168, 58, 0.18), 0 0 10px rgba(232, 168, 58, 0.7); }
+.dot-critical { box-shadow: 0 0 0 3px rgba(240, 90, 90, 0.18), 0 0 10px rgba(240, 90, 90, 0.7); }
+
+/* Focus: visible, blue, never colour-only. */
 :where(button, a, input, select, [tabindex]):focus-visible {
-  outline: 2px solid var(--color-ink-2);
+  outline: 2px solid var(--color-series-blue);
   outline-offset: 2px;
-  border-radius: 4px;
+  border-radius: 6px;
 }
 
-/* Range inputs: neutral track, white thumb; the thumb reacts only on interaction. */
+/* Range inputs: neutral track, ink thumb; the thumb reacts only on interaction. */
 input[type="range"] {
   -webkit-appearance: none;
   appearance: none;
@@ -81,7 +104,7 @@ input[type="range"]::-webkit-slider-thumb {
   margin-top: -5.5px;
   border-radius: 50%;
   background: var(--color-ink);
-  border: 2px solid var(--color-surface-0);
+  border: 2px solid var(--color-surface-1);
   box-shadow: 0 0 0 1px var(--color-line-strong);
   transition: transform 120ms ease, box-shadow 120ms ease;
 }
@@ -90,14 +113,14 @@ input[type="range"]::-moz-range-thumb {
   height: 14px;
   border-radius: 50%;
   background: var(--color-ink);
-  border: 2px solid var(--color-surface-0);
+  border: 2px solid var(--color-surface-1);
   box-shadow: 0 0 0 1px var(--color-line-strong);
   transition: transform 120ms ease, box-shadow 120ms ease;
 }
 input[type="range"]:hover::-webkit-slider-thumb,
-input[type="range"]:active::-webkit-slider-thumb { transform: scale(1.15); box-shadow: 0 0 0 4px rgba(244, 244, 245, 0.12); }
+input[type="range"]:active::-webkit-slider-thumb { transform: scale(1.15); box-shadow: 0 0 0 4px rgba(57, 135, 229, 0.28); }
 input[type="range"]:hover::-moz-range-thumb,
-input[type="range"]:active::-moz-range-thumb { transform: scale(1.15); box-shadow: 0 0 0 4px rgba(244, 244, 245, 0.12); }
+input[type="range"]:active::-moz-range-thumb { transform: scale(1.15); box-shadow: 0 0 0 4px rgba(57, 135, 229, 0.28); }
 
 /* Native number inputs: hide spinners so the value column stays clean. */
 input[type="number"]::-webkit-outer-spin-button,
@@ -108,28 +131,91 @@ input[type="number"] { -moz-appearance: textfield; appearance: textfield; }
 .scroll-thin::-webkit-scrollbar-thumb { background: var(--color-line-strong); border-radius: 4px; }
 .scroll-thin::-webkit-scrollbar-track { background: transparent; }
 
-/* Interactive-only motion. Cards and panels never animate on their own. */
+/* Interactive motion. */
 .pressable { transition: background-color 140ms ease, border-color 140ms ease, color 140ms ease, transform 120ms ease, box-shadow 140ms ease; }
 .pressable:active { transform: scale(0.985); }
 
-@media (prefers-reduced-motion: reduce) {
-  * { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
+/* ---------- Tab motion: every page enters with a rise-and-fade, and its
+   top-level rows stagger in behind it. Re-keyed on the route so each tab
+   change replays it. ---------- */
+.page-enter { animation: page-in 380ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+.page-enter > * > * { animation: rise-in 560ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+.page-enter > * > *:nth-child(1) { animation-delay: 40ms; }
+.page-enter > * > *:nth-child(2) { animation-delay: 100ms; }
+.page-enter > * > *:nth-child(3) { animation-delay: 160ms; }
+.page-enter > * > *:nth-child(4) { animation-delay: 220ms; }
+.page-enter > * > *:nth-child(5) { animation-delay: 280ms; }
+.page-enter > * > *:nth-child(6) { animation-delay: 340ms; }
+.page-enter > * > *:nth-child(n + 7) { animation-delay: 400ms; }
+.fade-in { animation: fade-in 320ms ease both; }
+.nav-active { animation: nav-pop 320ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+
+@keyframes page-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes rise-in { from { opacity: 0; transform: translateY(16px) scale(0.985); } to { opacity: 1; transform: translateY(0) scale(1); } }
+@keyframes fade-in { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes nav-pop { from { transform: translateX(-4px); opacity: 0.5; } to { transform: translateX(0); opacity: 1; } }
+
+/* ---------- Sky: fixed aurora field behind every page. A faint grid gives the
+   page a control-room feel; blurred colour orbs drift slowly and are offset by
+   the scroll position (set as --sy in px by CloudLayer) times their own
+   parallax factors, so layers separate while scrolling. ---------- */
+.sky {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 70% 50% at 50% -12%, rgba(57, 135, 229, 0.10), transparent 70%),
+    radial-gradient(ellipse 45% 35% at 100% 105%, rgba(144, 133, 233, 0.06), transparent 70%),
+    linear-gradient(180deg, #0d0d10 0%, var(--color-surface-0) 55%, #050506 100%);
+}
+.sky-grid {
+  position: absolute;
+  inset: 0;
+  background-image: linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: radial-gradient(ellipse at 50% 20%, #000 20%, transparent 80%);
+}
+.orb {
+  position: absolute;
+  opacity: var(--orb-opacity, 0.9);
+  will-change: transform;
+  transform: translate3d(calc(var(--sy, 0) * var(--px, 0) * 1px), calc(var(--sy, 0) * var(--py, 0) * 1px), 0);
+}
+.orb-body {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(circle at 42% 42%, var(--c), transparent 68%);
+  filter: blur(30px);
+  animation: orb-drift var(--dur, 40s) ease-in-out var(--delay, 0s) infinite alternate;
+}
+@keyframes orb-drift {
+  from { transform: translate3d(-26px, 0, 0) scale(1); }
+  50% { transform: translate3d(10px, -16px, 0) scale(1.06); }
+  to { transform: translate3d(30px, 8px, 0) scale(0.97); }
 }
 
-/* ---------- Landing page: the only place with ambient motion. ---------- */
+@media (prefers-reduced-motion: reduce) {
+  * { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
+  .orb { transform: none !important; }
+}
+
+/* ---------- Landing page: night sky, display type, gentle ambient motion. ---------- */
 .lp-root { transition: transform 700ms cubic-bezier(0.4, 0, 0.2, 1), opacity 600ms ease; transform-origin: var(--lp-origin, 50% 30%); }
 .lp-entering { transform: scale(2.2); opacity: 0; pointer-events: none; }
 .lp-grid {
-  background-image: linear-gradient(rgba(255,255,255,0.035) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.035) 1px, transparent 1px);
+  background-image: linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px);
   background-size: 48px 48px;
   mask-image: radial-gradient(ellipse at 50% 30%, #000 30%, transparent 75%);
 }
-.lp-display { font-family: "Orbitron", "Inter", ui-sans-serif, system-ui, sans-serif; }
+.lp-display { font-family: var(--font-display); }
 .lp-gradient-text {
-  background: linear-gradient(90deg, #f4f4f5 0%, #7cc4ff 45%, #9085e9 100%);
+  background: linear-gradient(90deg, #8fc0f5 0%, #3987e5 42%, #9085e9 100%);
   -webkit-background-clip: text; background-clip: text; color: transparent;
 }
-.lp-star { position: absolute; border-radius: 9999px; background: #cfe3ff; animation: lp-twinkle var(--d, 4s) ease-in-out infinite; animation-delay: var(--delay, 0s); }
 .lp-orbit { transform-origin: 200px 200px; animation: lp-spin 90s linear infinite; }
 .lp-orbit-rev { transform-origin: 200px 200px; animation: lp-spin 140s linear infinite reverse; }
 .lp-sun-glow { animation: lp-breathe 4.5s ease-in-out infinite; transform-origin: 262px 108px; }
@@ -139,19 +225,73 @@ input[type="number"] { -moz-appearance: textfield; appearance: textfield; }
 .lp-rain { animation: lp-rain 1.6s linear infinite; }
 .lp-halo { animation: lp-breathe 6s ease-in-out infinite; transform-origin: 200px 200px; }
 .lp-cta {
-  box-shadow: 0 0 0 1px rgba(124,196,255,0.35), 0 0 28px -6px rgba(57,135,229,0.55);
+  box-shadow: 0 0 0 1px rgba(57,135,229,0.45), 0 14px 36px -12px rgba(57,135,229,0.75);
   transition: transform 160ms ease, box-shadow 160ms ease, background-color 160ms ease;
 }
-.lp-cta:hover { transform: translateY(-2px); box-shadow: 0 0 0 1px rgba(124,196,255,0.7), 0 0 44px -4px rgba(57,135,229,0.75); background-color: rgba(57,135,229,0.14); }
+.lp-cta:hover { transform: translateY(-2px); box-shadow: 0 0 0 1px rgba(143,192,245,0.7), 0 24px 50px -14px rgba(57,135,229,0.9); background-color: #4a90e8; }
 .lp-cta:active { transform: translateY(0) scale(0.98); }
 .lp-card { transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease, background-color 180ms ease; }
-.lp-card:hover { transform: translateY(-3px) scale(1.015); border-color: rgba(124,196,255,0.45); box-shadow: 0 0 32px -10px rgba(57,135,229,0.6); background-color: #131316; }
-.lp-emblem { transition: transform 300ms ease, filter 300ms ease; cursor: pointer; }
-.lp-emblem:hover { transform: scale(1.03); filter: drop-shadow(0 0 40px rgba(57,135,229,0.35)); }
+.lp-card:hover { transform: translateY(-3px) scale(1.015); border-color: rgba(57,135,229,0.55); box-shadow: var(--shadow-card-hover); background-color: var(--color-surface-2); }
+.lp-emblem { transition: transform 300ms ease, filter 300ms ease; cursor: pointer; filter: drop-shadow(0 20px 50px rgba(57,135,229,0.25)); }
+.lp-emblem:hover { transform: scale(1.03); filter: drop-shadow(0 24px 60px rgba(57,135,229,0.5)); }
+.lp-rise { animation: rise-in 700ms cubic-bezier(0.22, 1, 0.36, 1) both; animation-delay: var(--delay, 0s); }
 
-@keyframes lp-twinkle { 0%, 100% { opacity: 0.15; transform: scale(0.8); } 50% { opacity: 0.9; transform: scale(1.2); } }
 @keyframes lp-spin { to { transform: rotate(360deg); } }
 @keyframes lp-breathe { 0%, 100% { opacity: 0.55; transform: scale(1); } 50% { opacity: 1; transform: scale(1.12); } }
 @keyframes lp-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
 @keyframes lp-flicker { 0%, 100% { opacity: 0.55; } 8% { opacity: 1; } 12% { opacity: 0.7; } 16% { opacity: 1; } 60% { opacity: 0.5; } }
 @keyframes lp-rain { from { stroke-dashoffset: 0; } to { stroke-dashoffset: -24; } }
+
+/* Areas map (Leaflet). OpenStreetMap raster tiles are inverted and desaturated
+   with a filter so the free basemap sits inside the dark control-room theme
+   without any keyed dark-tile service. Labels are small dark chips anchored at
+   each DISCOM's visual centre; the tooltip is a dark card with a hairline
+   border, matching the chart tooltips. */
+.leaflet-container {
+  font-family: var(--font-sans);
+  background: var(--color-surface-0);
+}
+.leaflet-container .leaflet-tile-pane {
+  filter: invert(1) grayscale(1) brightness(0.72) contrast(0.95);
+}
+.leaflet-container .leaflet-control-attribution {
+  font-size: 9.5px;
+  color: var(--color-ink-3);
+  background: rgba(17, 17, 19, 0.85);
+}
+.leaflet-container .leaflet-control-attribution a { color: var(--color-ink-2); }
+.leaflet-container .leaflet-bar { border: 1px solid var(--color-line-strong); box-shadow: var(--shadow-card); }
+.leaflet-container .leaflet-bar a {
+  color: var(--color-ink);
+  background: var(--color-surface-2);
+  border-bottom-color: var(--color-line);
+}
+.leaflet-container .leaflet-bar a:hover { background: var(--color-surface-3); }
+.leaflet-container .leaflet-bar a.leaflet-disabled { color: var(--color-ink-3); background: var(--color-surface-1); }
+.pw-map-label-wrap { background: none; border: 0; }
+.pw-map-label {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  transform: translate(-50%, -50%);
+  padding: 3px 7px;
+  border-radius: 4px;
+  border: 1px solid var(--color-line-strong);
+  background: rgba(17, 17, 19, 0.92);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+  white-space: nowrap;
+  line-height: 1.2;
+  pointer-events: none;
+}
+.pw-map-label--compact { flex-direction: row; gap: 5px; padding: 2px 6px; }
+.pw-map-label__name { font-size: 11px; font-weight: 700; letter-spacing: 0.04em; }
+.pw-map-label__val { font-size: 10px; color: var(--color-ink-2); font-variant-numeric: tabular-nums; }
+.leaflet-tooltip.pw-map-tip {
+  padding: 8px 10px;
+  border: 1px solid var(--color-line-strong);
+  border-radius: 6px;
+  color: var(--color-ink);
+  background: var(--color-surface-1);
+  box-shadow: var(--shadow-card);
+}
+.leaflet-tooltip.pw-map-tip::before { border-top-color: var(--color-line-strong); }

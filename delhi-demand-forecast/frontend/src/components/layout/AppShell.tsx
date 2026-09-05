@@ -6,6 +6,7 @@ import { sourceWord } from '../ui/Badges.tsx'
 import { CapacityInput } from '../ui/Controls.tsx'
 import { IconAlerts, IconAreas, IconClose, IconForecast, IconHome, IconMenu, IconModel, IconOverview, IconScenario, IconWeather, Logo } from '../ui/Icons.tsx'
 import StatusList, { StatusDot, useSystemRows } from '../ui/StatusList.tsx'
+import CloudLayer from './CloudLayer.tsx'
 
 const NAV = [
   { to: '/overview', label: 'Overview', icon: IconOverview },
@@ -45,6 +46,9 @@ export default function AppShell({ children }: { children: ReactNode }) {
   const title = TITLES[pathname] ?? 'Overview'
   const demo = status?.history.source === 'demo'
 
+  // Each tab change starts from the top and replays the entrance motion.
+  useEffect(() => { window.scrollTo({ top: 0 }) }, [pathname])
+
   const modelVersion = status
     ? status.model.loaded && status.model.name
       ? `${status.model.name}${status.model.trained_at ? ` · ${fmtDate(status.model.trained_at)}` : ''}`
@@ -54,23 +58,25 @@ export default function AppShell({ children }: { children: ReactNode }) {
     : '–'
 
   return (
-    <div className="flex min-h-screen bg-surface-0">
+    <div className="relative flex min-h-screen bg-surface-0">
+      <CloudLayer />
+
       {/* Sidebar */}
       <aside
-        className={`fixed inset-y-0 left-0 z-30 flex w-[228px] flex-col border-r border-line bg-surface-0 transition-transform duration-200 lg:static lg:translate-x-0 ${open ? 'translate-x-0' : '-translate-x-full'}`}
+        className={`fixed inset-y-0 left-0 z-30 flex w-[228px] flex-col border-r border-line bg-surface-0/85 backdrop-blur-md transition-transform duration-200 lg:sticky lg:top-0 lg:h-screen lg:translate-x-0 ${open ? 'translate-x-0' : '-translate-x-full'}`}
         aria-label="Primary navigation"
       >
         <div className="flex h-14 items-center gap-2.5 border-b border-line px-4">
-          <Link to="/" className="pressable rounded-[4px]" title="Front page"><Logo size={28} /></Link>
+          <Link to="/" className="pressable rounded-[6px]" title="Front page"><Logo size={28} /></Link>
           <div className="min-w-0 leading-tight">
-            <div className="text-[13px] font-extrabold tracking-[0.18em] text-ink">PEAKWATCH</div>
+            <div className="font-display text-[13px] font-extrabold tracking-[0.18em] text-ink">PEAKWATCH</div>
             <div className="truncate text-[9.5px] uppercase tracking-[0.14em] text-ink-3">Delhi grid intelligence</div>
           </div>
           <button className="ml-auto text-ink-3 hover:text-ink lg:hidden" onClick={() => setOpen(false)} aria-label="Close navigation"><IconClose size={16} /></button>
         </div>
 
-        <nav className="flex flex-col gap-px p-2">
-          <Link to="/" onClick={() => setOpen(false)} className="pressable mb-1 inline-flex w-fit items-center gap-1.5 rounded-[4px] border border-line bg-surface-1 px-2 py-1 text-[10.5px] font-semibold uppercase tracking-[0.1em] text-ink-2 hover:border-line-strong hover:text-ink">
+        <nav className="flex flex-col gap-0.5 p-2">
+          <Link to="/" onClick={() => setOpen(false)} className="pressable mb-1 inline-flex w-fit items-center gap-1.5 rounded-[6px] border border-line bg-surface-1 px-2 py-1 text-[10.5px] font-semibold uppercase tracking-[0.1em] text-ink-2 hover:border-line-strong hover:text-ink">
             <IconHome size={12} />Home
           </Link>
           {NAV.map((n) => {
@@ -82,7 +88,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
                 end
                 onClick={() => setOpen(false)}
                 className={({ isActive }) =>
-                  `pressable flex items-center gap-2.5 rounded-[4px] px-2.5 py-2 text-[12.5px] ${isActive ? 'bg-surface-2 font-semibold text-ink shadow-[inset_2px_0_0_0_#f4f4f5]' : 'font-medium text-ink-2 hover:bg-surface-1 hover:text-ink'}`
+                  `pressable flex items-center gap-2.5 rounded-[6px] px-2.5 py-2 text-[12.5px] ${isActive ? 'nav-active bg-series-blue/12 font-semibold text-ink shadow-[inset_2px_0_0_0_#3987e5]' : 'font-medium text-ink-2 hover:bg-surface-2 hover:text-ink'}`
                 }
               >
                 <Icon size={15} />
@@ -107,27 +113,27 @@ export default function AppShell({ children }: { children: ReactNode }) {
           </div>
           <details className="group">
             <summary className="cursor-pointer list-none text-[10.5px] text-ink-3 hover:text-ink-2">Subsystems ▸</summary>
-            <div className="mt-2 rounded-[4px] border border-line bg-surface-1 p-3"><StatusList dense /></div>
+            <div className="mt-2 rounded-[6px] border border-line bg-surface-1 p-3"><StatusList dense /></div>
           </details>
         </div>
       </aside>
-      {open && <div className="fixed inset-0 z-20 bg-black/70 lg:hidden" onClick={() => setOpen(false)} />}
+      {open && <div className="fixed inset-0 z-20 bg-black/60 backdrop-blur-sm lg:hidden" onClick={() => setOpen(false)} />}
 
       {/* Main column */}
-      <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-10 flex h-14 items-center gap-4 border-b border-line bg-surface-0/95 px-4 backdrop-blur lg:px-6">
-          <button className="pressable rounded-[4px] border border-line-strong p-1.5 text-ink-2 hover:text-ink lg:hidden" onClick={() => setOpen(true)} aria-label="Open navigation"><IconMenu size={16} /></button>
-          <Link to="/" className="pressable inline-flex shrink-0 items-center gap-1.5 rounded-[4px] border border-line bg-surface-1 px-2 py-1 text-[10.5px] font-semibold uppercase tracking-[0.1em] text-ink-2 hover:border-line-strong hover:text-ink" title="Front page">
+      <div className="relative z-[1] flex min-w-0 flex-1 flex-col">
+        <header className="sticky top-0 z-10 flex h-14 items-center gap-4 border-b border-line bg-surface-0/75 px-4 backdrop-blur-md lg:px-6">
+          <button className="pressable rounded-[6px] border border-line-strong p-1.5 text-ink-2 hover:text-ink lg:hidden" onClick={() => setOpen(true)} aria-label="Open navigation"><IconMenu size={16} /></button>
+          <Link to="/" className="pressable inline-flex shrink-0 items-center gap-1.5 rounded-[6px] border border-line bg-surface-1 px-2 py-1 text-[10.5px] font-semibold uppercase tracking-[0.1em] text-ink-2 hover:border-line-strong hover:text-ink" title="Front page">
             <IconHome size={12} />Home
           </Link>
-          <div className="min-w-0">
-            <h1 className="truncate text-sm font-semibold tracking-[-0.01em] text-ink">{title}</h1>
+          <div key={pathname} className="fade-in min-w-0">
+            <h1 className="truncate text-sm font-bold tracking-[-0.01em] text-ink">{title}</h1>
             <div className="hidden text-[10.5px] uppercase tracking-[0.12em] text-ink-3 sm:block">Delhi Grid Intelligence</div>
           </div>
 
           <div className="ml-auto flex items-center gap-4 lg:gap-6">
             {demo && (
-              <span className="hidden items-center gap-1.5 rounded-[4px] border border-warning/40 bg-warning/8 px-2 py-1 text-[10px] font-bold tracking-[0.1em] text-warning md:inline-flex" title="Bundled synthetic history is being served. Not real Delhi load data.">
+              <span className="hidden items-center gap-1.5 rounded-[6px] border border-warning/50 bg-warning/14 px-2 py-1 text-[10px] font-bold tracking-[0.1em] text-warning md:inline-flex" title="Bundled synthetic history is being served. Not real Delhi load data.">
                 DEMO MODE
               </span>
             )}
@@ -147,8 +153,10 @@ export default function AppShell({ children }: { children: ReactNode }) {
           </div>
         </header>
 
-        <main className="flex-1 p-4 lg:p-6">{children}</main>
-        <footer className="border-t border-line px-4 py-2 text-[10px] text-ink-3 lg:px-6">
+        <main className="flex-1 p-4 lg:p-6">
+          <div key={pathname} className="page-enter">{children}</div>
+        </main>
+        <footer className="border-t border-line bg-surface-0/60 px-4 py-2 text-[10px] text-ink-3 lg:px-6">
           PEAKWATCH · Predict the peak. Prevent the risk. · Decision support only, not an operational instruction.
         </footer>
       </div>

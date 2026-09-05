@@ -4,7 +4,7 @@ import {
 } from 'recharts'
 import type { ActualPoint, ForecastPoint } from '../../types/api.ts'
 import { fmtDateTime, fmtInt, fmtMW, fmtTemp, fmtTick } from '../../utils/format.ts'
-import { C, axisLine, legendStyle, niceDomain, tickStyle } from './theme.ts'
+import { C, axisLine, legendStyle, legendText, niceDomain, tickStyle } from './theme.ts'
 import { TooltipBox, hoveredRow, type TipProps } from './ChartTooltip.tsx'
 
 interface Row {
@@ -91,7 +91,7 @@ export default function ForecastChart({ forecast, actual = [], capacityMw, peakT
             <XAxis dataKey="ts" tickFormatter={fmtTick} tick={tickStyle} axisLine={axisLine} tickLine={false} interval={tickInterval} minTickGap={24} />
             <YAxis domain={domain} tick={tickStyle} axisLine={false} tickLine={false} tickFormatter={(v: number) => fmtInt(v)} width={54} />
             <Tooltip content={<TooltipContent />} cursor={{ stroke: C.tick, strokeDasharray: '3 3' }} />
-            <Legend verticalAlign="top" align="right" height={26} iconType="plainline" iconSize={14} wrapperStyle={legendStyle} />
+            <Legend verticalAlign="top" align="right" height={26} iconType="plainline" iconSize={14} wrapperStyle={legendStyle} formatter={legendText} />
             <Area type="monotone" dataKey="band" name="Prediction interval (P10–P90)" stroke="none" fill={C.forecast} fillOpacity={0.14} connectNulls={false} isAnimationActive={false} legendType="rect" />
             <Line type="monotone" dataKey="actual" name="Actual demand" stroke={C.actual} strokeWidth={2} dot={false} connectNulls={false} isAnimationActive={false} />
             <Line type="monotone" dataKey="predicted" name="Predicted demand" stroke={C.forecast} strokeWidth={2} dot={false} connectNulls={false} isAnimationActive={false} />
