@@ -45,41 +45,52 @@ background (about 10-15 s); the header badge switches from HEURISTIC ESTIMATE to
 
 ## Deployment (bonus - the live demo runs locally)
 
-Two services, deployed separately. Nothing here changes the local path: with no
-environment variables set, the backend serves the committed real dataset on port
-8000 and the frontend talks to it through the Vite proxy exactly as before.
+Two services, deployed separately from the same GitHub repo. Nothing here changes the
+local path: with no environment variables set, the backend serves the committed real
+dataset on port 8000 and the frontend talks to it through the Vite proxy.
 
-| Service | Platform | What it needs |
-|---|---|---|
-| Backend (FastAPI) | Render, free tier, from `render.yaml` | `PORT` (injected by Render), `PEAKWATCH_HISTORY_CSV=data/processed/delhi_history.csv`, `PEAKWATCH_FRONTEND_ORIGIN=https://<your-app>.vercel.app` (CORS), optional `PEAKWATCH_CAPACITY_MW` |
-| Frontend (Vite static build) | Vercel, root directory `frontend` | `VITE_API_BASE=https://<your-api>.onrender.com` |
+The GitHub repo root is the `Hackathon` folder; this project lives in
+`delhi-demand-forecast/`. Both platforms must be pointed at the right sub-folder.
+
+| Service | Platform | Root directory | Needs |
+|---|---|---|---|
+| Backend (FastAPI) | Render, free web service | `delhi-demand-forecast` (set by the root `render.yaml`) | nothing else; `PORT` is injected by Render |
+| Frontend (Vite static build) | Vercel | `delhi-demand-forecast/frontend` | nothing else; `frontend/vercel.json` proxies `/api/*` to the Render URL |
 
 The committed `data/processed/delhi_history.csv` and `ml/models/model.joblib` are all the
 backend needs; `data/raw/` and `.env` are gitignored and never deployed.
 
-**Backend on Render**
+**Backend on Render (do this first)**
 
-1. Push the repo to GitHub.
-2. Render dashboard -> New -> Blueprint -> select the repo. Render reads `render.yaml`
-   (build `pip install -r backend/requirements.txt`, start `python -m backend.main`,
-   health check `/api/health`).
-3. When prompted, set `PEAKWATCH_FRONTEND_ORIGIN` to the Vercel URL (you can fill it in
-   after step 6 and redeploy). Do not use a wildcard origin.
-4. Wait for the first deploy, then open `https://<your-api>.onrender.com/api/health` -
-   it must return `"data_source": "real"` and `"model_loaded": true`.
+1. Open https://dashboard.render.com -> New -> **Blueprint** -> connect the GitHub repo
+   `tanmaytiwari37/delhi-demand-forecast` -> Apply. Render reads the root `render.yaml`
+   (root dir `delhi-demand-forecast`, build `pip install -r backend/requirements.txt`,
+   start `python -m backend.main`, health check `/api/health`, Python 3.13.7).
+   One-click alternative: https://render.com/deploy?repo=https://github.com/tanmaytiwari37/delhi-demand-forecast
+2. If Render asks for `PEAKWATCH_FRONTEND_ORIGIN`, leave it blank for now (the frontend
+   proxies through Vercel, so CORS is not involved).
+3. Wait for "Live", then open `https://<service>.onrender.com/api/health`. It must return
+   `"data_source": "real"` and `"model_loaded": true`.
+4. Note the hostname. The service is named `peakwatch-api`, so it is
+   `https://peakwatch-api.onrender.com` unless Render added a suffix. If it did, put the
+   real hostname in the `/api/:path*` rewrite of `frontend/vercel.json` (and `vercel.json`
+   at the repo root), commit and push.
 
 **Frontend on Vercel**
 
-5. Vercel dashboard -> Add New Project -> import the repo. Set **Root Directory** to
-   `frontend` (framework preset Vite, build `npm run build`, output `dist` are detected).
-6. Add the environment variable `VITE_API_BASE=https://<your-api>.onrender.com` and deploy.
-   `frontend/vercel.json` rewrites every path to `index.html` so React Router deep links work.
-7. Copy the Vercel URL into `PEAKWATCH_FRONTEND_ORIGIN` on Render (step 3) and redeploy the
-   API, otherwise browser requests fail CORS.
+5. https://vercel.com/new -> import the GitHub repo -> set **Root Directory** to
+   `delhi-demand-forecast/frontend` -> Deploy. Framework preset Vite, build
+   `npm run build`, output `dist` are read from `frontend/vercel.json`. No environment
+   variable is required.
+6. Open the Vercel URL. The front page loads immediately; the live figures appear once
+   the Render service is awake.
+
+Optional: setting `VITE_API_BASE=https://<service>.onrender.com` in Vercel makes the
+browser call Render directly instead of through the rewrite. If you do that, also set
+`PEAKWATCH_FRONTEND_ORIGIN=https://<app>.vercel.app` on Render for CORS.
 
 **Free-tier caveat.** Render free web services sleep after about 15 minutes idle. The
-first request after that is a cold start of up to a minute (install is cached; the app
-loads the CSV and model in a few seconds once the container is up). The dashboard shows
+first request after that is a cold start of up to a minute. The dashboard shows
 "Cannot reach the API ... retry shortly" until the API wakes. Open the health URL a
 minute before a demo. Never rely on the deployed copy for the live demo - run locally.
 

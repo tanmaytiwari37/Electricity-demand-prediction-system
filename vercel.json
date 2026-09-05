@@ -5,6 +5,7 @@
   "buildCommand": "cd delhi-demand-forecast/frontend && npm run build",
   "outputDirectory": "delhi-demand-forecast/frontend/dist",
   "rewrites": [
-    { "source": "/(.*)", "destination": "/index.html" }
+    { "source": "/api/:path*", "destination": "https://peakwatch-api.onrender.com/api/:path*" },
+    { "source": "/((?!api/).*)", "destination": "/index.html" }
   ]
 }

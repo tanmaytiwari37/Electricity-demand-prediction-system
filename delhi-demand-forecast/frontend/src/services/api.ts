@@ -47,7 +47,8 @@ function toApiError(err: unknown): ApiError {
     const msg = typeof detail === 'string' ? detail : Array.isArray(detail) ? 'Invalid request parameters.' : `API error ${e.response.status}`
     return new ApiError(msg, 'http', e.response.status)
   }
-  const where = API_BASE ? `at ${API_BASE}` : 'through the local proxy (is the backend running on port 8000?)'
+  const local = typeof window !== 'undefined' && /^(localhost|127\.0\.0\.1)$/.test(window.location.hostname)
+  const where = API_BASE ? `at ${API_BASE}` : local ? 'through the Vite proxy (is the backend running on port 8000?)' : 'behind /api (the hosting rewrite to the Render backend)'
   return new ApiError(`Cannot reach the API ${where}. A free-tier backend can take up to a minute to wake up; retry shortly.`, 'network', null)
 }
 
